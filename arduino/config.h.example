@@ -1,0 +1,4 @@
+#define WIFI_SSID "my ssid"
+#define WIFI_PASSWORD "my password"
+#define TIME_OFFSET -18000L
+#define DISPENSE_TIME 600
