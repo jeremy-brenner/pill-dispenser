@@ -1,5 +1,5 @@
 # pill-dispenser
-automated pill despenser
+automated pill dispenser
 
 Dev board [HERE](https://www.amazon.com/gp/product/B076F52NQD)
 Motors and drivers [HERE](https://www.amazon.com/gp/product/B00LPK0E5A)
