@@ -1,9 +1,24 @@
-$fn=32;
 
 
 use <./hex-grid.scad>;
 use <./involute_gears.scad>;
 use <./board-mount.scad>;
+
+carouselCap=true;
+motorGear=true;
+bigGear=true;
+carousel=true;
+bearingPost=true;
+boardMount1=true;
+boardMount2=true;
+mountRing=true;
+mainMount=true;
+bottomLayer=true;
+
+
+/* [Hidden] */
+
+$fn=32;
 
 lw=0.4;
 t=lw*2;
@@ -30,25 +45,48 @@ gear_thickness=2;
 motorDistance=66;
 motorAngle=45;
 
+
 translate([0,0,12]) {
-  translate([0,0,21]) rotate([180,0,0]) carousel();
-  bigGear();
+  if(carousel) {
+    translate([0,0,21]) rotate([180,0,0]) carousel();
+  }
+  if(bigGear) {
+    bigGear();
+  }
 }
-translate([0,0,35]) rotate([180,0,0]) carouselCap();
+if(carouselCap) {
+  translate([0,0,35]) rotate([180,0,0]) carouselCap();
+}
 
-bearingPost();
+if(bearingPost) {
+  bearingPost();
+}
 
-mainMount();
+if(mountRing) {
+  translate([0,0,8.25]) mountRing();  
+}
 
-translate([0,0,-16.5]) bottomLayer();
-translate([0,0,8.25]) mountRing();
+if(mainMount) {
+  mainMount();
+}
 
-motorPosition() translate([8,0,13.25]) motorGear();
+if(bottomLayer) {
+  translate([0,0,-16.5]) bottomLayer();
+}
+
+if(motorGear) {
+  motorPosition() translate([8,0,13.25]) motorGear();
+}
 
 translate([0,19.3,14]) rotate([0,180,0]) rotate([90,0,0]) {
-  boardMount(9,0,false);
-  translate([0,5,40]) rotate([180,0,0]) boardMount(0,10,true);
+  if(boardMount1) {
+    boardMount(9,0,false);
+  }
+  if(boardMount2) {
+    translate([0,5,40]) rotate([180,0,0]) boardMount(0,10,true);
+  }
 }
+
 
 module bottomLayer() {
   translate([0,0,1.5]) rotate([0,0,45]) ring(4,90,52) {
