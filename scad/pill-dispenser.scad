@@ -3,9 +3,11 @@
 use <./hex-grid.scad>;
 use <./involute_gears.scad>;
 use <./board-mount.scad>;
+use <./motor.scad>;
 
 carouselCap=true;
 motorGear=true;
+carouselMotor=true;
 bigGear=true;
 carousel=true;
 bearingPost=true;
@@ -14,7 +16,7 @@ boardMount2=true;
 mountRing=true;
 mainMount=true;
 bottomLayer=true;
-
+case=true;
 
 /* [Hidden] */
 
@@ -45,6 +47,17 @@ gear_thickness=2;
 motorDistance=66;
 motorAngle=45;
 
+if(carouselCap) {
+  translate([0,0,35]) rotate([180,0,0]) carouselCap();
+}
+
+if(motorGear) {
+  motorPosition() translate([8,0,13.25]) motorGear();
+}
+
+if(carouselMotor) {
+  motorPosition() translate([0,0,-10]) rotate([0,0,90]) motor();
+}
 
 translate([0,0,12]) {
   if(carousel) {
@@ -54,28 +67,9 @@ translate([0,0,12]) {
     bigGear();
   }
 }
-if(carouselCap) {
-  translate([0,0,35]) rotate([180,0,0]) carouselCap();
-}
 
 if(bearingPost) {
   bearingPost();
-}
-
-if(mountRing) {
-  translate([0,0,8.25]) mountRing();  
-}
-
-if(mainMount) {
-  mainMount();
-}
-
-if(bottomLayer) {
-  translate([0,0,-16.5]) bottomLayer();
-}
-
-if(motorGear) {
-  motorPosition() translate([8,0,13.25]) motorGear();
 }
 
 translate([0,19.3,14]) rotate([0,180,0]) rotate([90,0,0]) {
@@ -87,6 +81,69 @@ translate([0,19.3,14]) rotate([0,180,0]) rotate([90,0,0]) {
   }
 }
 
+if(mountRing) {
+  translate([0,0,8.25]) mountRing();  
+}
+
+if(mainMount) {
+  mainMount();
+}
+
+if(bottomLayer) {
+  translate([0,0,-14.75]) bottomLayer();
+}
+
+if(case) {
+  translate([0,0,-16.25]) case();
+}
+
+module case() {
+  mh=60;
+  mr=63;
+  mt=lw*4;
+  r=pr+0.5+t*2.6;
+  difference() {
+    union() {
+      cylinder(r=mr+mt,h=mh);
+      translate([0,-(mr+mt),0]) cube([mr+30+mt,(mr+mt)*2, mh]);
+    }
+    translate([0,0,mt]) cylinder(r=mr,h=mh);
+    translate([-mr+3,0,r+mt]) rotate([0,-90,0]) cylinder(r=r,h=10);
+    translate([0,-mr,mt]) cube([mr+30,mr*2, mh]);
+  }
+  
+  translate([0,0,mt]) cylinder(r=9.5,h=4,$fn=6);
+
+  translate([-61-mt,-15,0]) difference() {
+    cube([mt,30,16+mt]);
+    translate([3,15,r+mt]) rotate([0,-90,0]) cylinder(r=r,h=10);
+  }
+  translate([-57-mt,0,0]) tray();
+}
+
+module tray() {
+  r=pr+0.5+t*2.6;
+
+  translate([0,-20,r]) 
+  rotate([0,-90,0])
+  difference() {
+    union() {
+      cylinder(r=r,h=20-r);
+      translate([0,0,20-r]) sphere(r=r);
+      translate([0,40,0]) cylinder(r=r,h=20-r);
+      translate([0,40,20-r]) sphere(r=r);
+      translate([0,0,20-r]) rotate([-90,0,0]) cylinder(r=r,h=40);
+      translate([-r,0,0]) cube([r,40,20-r]);
+    }
+    translate([0,0,-1]) cylinder(r=r-t,h=20-r+1);
+    translate([0,0,20-r]) sphere(r=r-t);
+    translate([0,0,-1]) translate([0,40,0]) cylinder(r=r-t,h=20-r+1);
+    translate([0,40,20-r]) sphere(r=r-t);
+    translate([0,0,20-r]) rotate([-90,0,0]) cylinder(r=r-t,h=40);
+    translate([0,-100,-1]) cube([100,200,101]);
+    translate([-r+t,0,-1]) cube([r,40,20-r+1]);
+  }
+}
 
 module bottomLayer() {
   translate([0,0,1.5]) rotate([0,0,45]) ring(4,90,52) {
@@ -169,8 +226,8 @@ module mainMount() {
         translate([0,0,4]) hexGrid(5.35,4,t,13,11,skipCells,[]);
         cylinder(r=55.5,h=10.5);
       }
-      translate([-52,0,4]) cylinder(r=pr+0.5+t*2,h=4);
-      translate([0,0,4]) track(4);
+      translate([-52,0,0]) cylinder(r=pr+0.5+t*2,h=8);
+      track(8);
     }
     translate([0,0,-1]) cylinder(r=bearingOuterR+4,h=10);
     motorPosition() translate([0,0,-1]) cylinder(r=22,h=11);
