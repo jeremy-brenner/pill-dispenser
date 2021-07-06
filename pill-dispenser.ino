@@ -8,12 +8,10 @@ WiFiUDP ntpUDP;
 
 NTPClient timeClient(ntpUDP, TIME_OFFSET);
 ESPFlash<int> dayDispensed("/dayDispensed");
-int lastDD;
+ESPFlash<bool> isLocked("/locked");
 
-int motorSteps = 2048;
-int holeSteps = motorSteps/8;
- 
-int pins[4] = { 5, 4, 0, 2 };
+int lastDD;
+int lastButtonState = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -25,27 +23,53 @@ void setup() {
   timeClient.begin();  
   lastDD = dayDispensed.get();
 
-  for (int p : pins) {
+  for (int p : HOLE_PINS) {
     pinMode(p, OUTPUT);
   }
-  
+ 
+  for (int p : LOCK_PINS) {
+    pinMode(p, OUTPUT);
+  }
+
+  pinMode(buttonPin, INPUT);
+
+  Serial.print("Hole steps: ");
+  Serial.print(HOLE_STEPS);
+  Serial.print(" Lock steps: ");
+  Serial.println(LOCK_STEPS);
   Serial.println("End setup");
+  Serial.println(isLocked.get());
   delay(1000);
 }
 
 void loop() {
   timeClient.update();
+  
   if( !ntpReady() ){
     Serial.println("Ntp not ready, bailing");
-    Serial.println(timeClient.getEpochTime());
     delay(1000);
     return;
   }
   
+  int buttonState = digitalRead(buttonPin);
+  if( buttonState != lastButtonState ) {
+    lastButtonState = buttonState;
+    if(buttonState == 0) {
+      Serial.println("Button pressed"); 
+      if(isLocked.get()) {
+        Serial.println("unlocking"); 
+        unlockBox();
+        isLocked.set(false);
+      } else {
+        Serial.println("locking"); 
+        lockBox();
+        isLocked.set(true);
+      }
+    }
+  }
+  
   int currentDay = timeClient.getDay();
   int currentTime = timeClient.getHours() * 100 + timeClient.getMinutes();
-
-  printDebugInfo(currentDay, currentTime); 
 
   if(currentDay != lastDD && currentTime >= DISPENSE_TIME) {
     Serial.println("Dispensing");
@@ -53,7 +77,7 @@ void loop() {
     nextPill();
   }
 
-  delay(5000);
+  delay(100);
 }
 
 void printDebugInfo(int currentDay, int currentTime) {
@@ -91,13 +115,25 @@ void setDD(int dd) {
   lastDD = dd;
 }
 
-void nextPill() {
-  for(int s = 0;  s < holeSteps; s++) {
+void moveMotor(const int pins[4], const int steps) {
+  for(int s = 0;  s < steps; s++) {
     for(int p = 0;  p < 4; p++) {
       digitalWrite(pins[p], pinState(s,p));
     }
     delay(10);
   }
+}
+
+void nextPill() {
+  moveMotor(HOLE_PINS,HOLE_STEPS);
+}
+
+void unlockBox() {
+  moveMotor(UNLOCK_PINS,LOCK_STEPS);
+}
+
+void lockBox() {
+  moveMotor(LOCK_PINS,LOCK_STEPS);
 }
 
 int pinState(int holeStep, int pin) {
