@@ -4,6 +4,9 @@ use <./hex-grid.scad>;
 use <./involute_gears.scad>;
 use <./board-mount.scad>;
 use <./motor.scad>;
+use <./button.scad>;
+use <./lock.scad>;
+use <./tapered-cube.scad>;
 
 carouselCap=true;
 motorGear=true;
@@ -11,12 +14,18 @@ carouselMotor=true;
 bigGear=true;
 carousel=true;
 bearingPost=true;
-boardMount1=true;
-boardMount2=true;
 mountRing=true;
 mainMount=true;
 bottomLayer=true;
 case=true;
+lid=true;
+lidInner=true;
+lidMotorMount=true;
+lidMotor=true;
+lidMotorPost=true;
+
+lock=true;
+locked=true;
 
 /* [Hidden] */
 
@@ -47,6 +56,11 @@ gear_thickness=2;
 motorDistance=66;
 motorAngle=45;
 
+mt=lw*4;
+mr=63;
+bl=60;
+lr=mr-1;
+
 if(carouselCap) {
   translate([0,0,35]) rotate([180,0,0]) carouselCap();
 }
@@ -59,9 +73,9 @@ if(carouselMotor) {
   motorPosition() translate([0,0,-10]) rotate([0,0,90]) motor();
 }
 
-translate([0,0,12]) {
+translate([0,0,11.5]) {
   if(carousel) {
-    translate([0,0,21]) rotate([180,0,0]) carousel();
+    carousel();
   }
   if(bigGear) {
     bigGear();
@@ -72,14 +86,18 @@ if(bearingPost) {
   bearingPost();
 }
 
-translate([0,19.3,14]) rotate([0,180,0]) rotate([90,0,0]) {
-  if(boardMount1) {
-    boardMount(9,0,false);
+translate([100,-34,-14.5]) {
+  if(lidMotorMount) {
+    lidMotorMount();
   }
-  if(boardMount2) {
-    translate([0,5,40]) rotate([180,0,0]) boardMount(0,10,true);
+  if(lidMotor) {
+    translate([0,0,4.5]) rotate([0,0,-135]) motor();
+  }
+  if(lidMotorPost) {
+    lidMotorPost();
   }
 }
+
 
 if(mountRing) {
   translate([0,0,8.25]) mountRing();  
@@ -90,35 +108,188 @@ if(mainMount) {
 }
 
 if(bottomLayer) {
-  translate([0,0,-14.75]) bottomLayer();
+  translate([0,0,-14.75]) color("grey") bottomLayer();
 }
 
 if(case) {
-  translate([0,0,-16.25]) case();
+  translate([0,0,-16.25]) {
+    case();
+  }
+}
+
+translate([0,0,34]) {
+  if(lid) {
+    lid();
+  }
+
+  if(lidInner) {
+    lidInner();
+  }
+  if(lock) {
+    lock(locked);
+  }
+}
+
+module lidMotorPost() {
+  cw=10*sqrt(2)/2;
+  translate([-5.5,5.5,26]) difference() {
+    union() {
+      cylinder(r=5,h=22);
+      translate([0,0,22]) taperedCube(cw,10,-2);
+    }
+    translate([0,0,-0.1]) cylinder(r=2.7,h=2.61);
+    translate([0,0,2.5]) motorPegHole();
+  }
+}
+
+module lidInner() {
+  ir=lr-2.5;
+  iir=lr-4.5;
+  
+  difference() {
+    union() {
+      difference() {
+        union() {
+          translate([0,0,0]) cylinder(r=ir,h=15);
+          translate([0,-ir+6,0]) cube([ir+bl,ir*2-12, 15]);
+        }
+        translate([0,0,2]) {
+          cylinder(r=iir,h=17);
+          translate([0,-iir+6,0]) cube([iir+bl,iir*2-12, 17]);
+          translate([94.5,-28.5,0]) cylinder(r=26,h=20);
+        }
+      }
+      translate([94.5,-28.5,2]) cylinder(r=15,h=7.8);
+      translate([26,32,0]) {
+        cube([20,20,4.98]);
+        translate([0,0,0]) cube([20,8,9.8]);
+      }
+      translate([26+20,0,0]) rotate([0,0,180]) translate([0,32,0]) {
+        cube([20,20,4.98]);
+        translate([0,0,0]) cube([20,8,9.8]);
+      }
+      
+
+    }
+    translate([26,42,0]) {
+        translate([0,0,5]) cube([23,20,11]);
+    }
+
+      translate([26,-62,0]) {
+        translate([0,0,5]) cube([23,20,11]);
+    }
+    translate([36.5,0,-2]) cylinder(r=3.2,h=11);
+
+    translate([94.5,-28.5,-1]) cylinder(r=10.5,h=30);
+
+    translate([mr/2,-(mr+mt+1),4.99]) cube([10,(mr+mt+1)*2,5.01]);
+  }
+  translate([36.5,0,2]) {
+    difference() {
+      cylinder(r=6,h=8); 
+      translate([0,0,-1]) cylinder(r=3.2,h=11);
+    }
+  }
+}
+
+module lid() {
+  ir=lr-2;
+  r=pr+0.5+t*2.6;
+
+  difference() {
+    union() {
+      difference() {
+        union() {
+          translate([0,0,0]) cylinder(r=lr,h=15);
+          translate([0,-lr+6,0]) cube([lr+bl,lr*2-12, 15]);
+        }
+        translate([0,0,-0.1]) cylinder(r=ir,h=16);
+        translate([0,-ir+6,-0.1]) cube([ir+bl,ir*2-12, 16]);
+      }
+
+      translate([37,0,0]) {
+        translate([-10,34,5]) cube([20,20,10]);
+        rotate([0,0,180]) translate([-10,34,5]) cube([20,20,10]);
+      }
+
+      difference() {
+        union() {
+          cylinder(r=mr+mt*2,h=15+mt);
+          translate([0,-(mr+mt*2),0]) cube([mr+bl+mt*4,(mr+mt*2)*2, 15+mt]);
+        }
+        translate([0,0,-1]) cylinder(r=mr+mt+0.5,h=16);
+        translate([0,-(mr+mt+0.5),-1]) cube([mr+bl+mt*2+1,(mr+mt+0.5)*2, 16]);
+      }
+    }
+    translate([mr/2,-(mr+mt+1),4.99]) cube([10,(mr+mt+1)*2,5.01]);
+    translate([36.5,0,0]) cylinder(r=43,h=15);
+  }
+  translate([36.5,0,0]) {
+    difference() {
+      cylinder(r=3,h=15); 
+      translate([0,0,-1]) cylinder(r=1.5,h=16); 
+    }
+    translate([0,0,14]) cylinder(r=10,h=1); 
+  }
+  translate([94.5,-28.5,10]) {
+    cylinder(r=3,h=4); 
+    translate([0,0,4]) cylinder(r=10,h=1); 
+  }
 }
 
 module case() {
-  mh=60;
-  mr=63;
-  mt=lw*4;
+  mh=65;
   r=pr+0.5+t*2.6;
+
   difference() {
     union() {
-      cylinder(r=mr+mt,h=mh);
-      translate([0,-(mr+mt),0]) cube([mr+30+mt,(mr+mt)*2, mh]);
-    }
-    translate([0,0,mt]) cylinder(r=mr,h=mh);
-    translate([-mr+3,0,r+mt]) rotate([0,-90,0]) cylinder(r=r,h=10);
-    translate([0,-mr,mt]) cube([mr+30,mr*2, mh]);
-  }
-  
-  translate([0,0,mt]) cylinder(r=9.5,h=4,$fn=6);
+      difference() {
+        union() {
+          cylinder(r=mr+mt,h=mh);
+          translate([0,-(mr+mt),0]) cube([mr+bl+mt*2,(mr+mt)*2, mh]);
+        }
+        translate([0,0,mt]) cylinder(r=mr,h=mh);
+        translate([0,-mr+6,mt]) cube([mr+bl,mr*2-12, mh]);
+      }
 
-  translate([-61-mt,-15,0]) difference() {
-    cube([mt,30,16+mt]);
-    translate([3,15,r+mt]) rotate([0,-90,0]) cylinder(r=r,h=10);
+      translate([0,0,mt]) cylinder(r=9.4,h=4,$fn=6);
+      translate([-61-mt,-15,0]) cube([mt,30,16+mt]);
+      translate([-57-mt,0,0]) tray();
+
+      translate([45,50,0]) stepperBoardMount();
+      translate([81.5,50,0]) arduinoBoardMount();
+      translate([45,-55, 0]) stepperBoardMount();
+      translate([114.5,-36,mt]) rotate([0,0,-135]) {
+        cube([17.5,5,5]);
+        translate([17.5/2,-11.6,0]) cylinder(r=14.5,h=4.5);
+      }
+      translate([122.9,10,mt]) rotate([0,0,90]) buttonBracket();
+
+    }
+    translate([-mr+3,0,r+mt]) rotate([0,-90,0]) cylinder(r=r,h=10);
+    translate([mr/2,-(mr+mt+1),mh-10]) cube([10,(mr+mt+1)*2,5]);
+    translate([mr+bl-1,0,10]) powerHole();   
+    translate([mr+bl-1,20,mt+6]) rotate([0,90,0]) cylinder(r=3.75,h=10);  
   }
-  translate([-57-mt,0,0]) tray();
+}
+
+module lidMotorMount() {
+  intersection() {
+    rotate([0,0,-135]) difference() {
+      union() {
+        translate([0,0,15]) motorMount();
+        cylinder(r=22,h=15);
+      }
+      translate([0,0,-0.5]) cylinder(r=14.5,h=25);
+      translate([-50,-104,-1]) cube([100,100,100]);
+      translate([-50,-96,-1]) cube([100,100,16.1]);
+      translate([-9,-3,-0.5]) cube([18,20,16.5]);
+    }
+    translate([-81,-19,-1]) cube([100,100,100]);
+  }
+}
+module powerHole() {
+  rotate([0,90,0]) cylinder(r=5.3,h=10);
 }
 
 module tray() {
@@ -325,9 +496,9 @@ module carousel() {
 module bearingPost() intersection() {
   union() {
     cylinder(r=4,h=8);
-    translate([0,0,8]) cylinder(r=5,h=21);
+    translate([0,0,8]) cylinder(r=5,h=3);
 
-    translate([0,0,29]) cylinder(r=hexCircumradius(hexR-t),h=5,$fn=6);
+    translate([0,0,11]) cylinder(r=hexCircumradius(hexR-t),h=5,$fn=6);
   }
   translate([-50,0.1,0]) cube([100,100,100]);
 }
