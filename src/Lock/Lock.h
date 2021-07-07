@@ -16,6 +16,8 @@ class Lock
     void lock();
     void unlock();
   private:
+    void _lock();
+    void _unlock();
     Motor _motor;
     ESPFlash<bool> _isLocked;
 };

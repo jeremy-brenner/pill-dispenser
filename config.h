@@ -1,3 +1,5 @@
+#define DEBUG true
+
 #define BUTTON_PIN 15
 
 #define PILL_DEG 45

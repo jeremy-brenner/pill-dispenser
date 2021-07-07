@@ -11,15 +11,27 @@ Lock::Lock() :
   
 }
 void Lock::toggleLock() {
-  _isLocked.get() ? unlock() : lock();
+  _isLocked.get() ? _unlock() : _lock();
 }
 
 void Lock::lock() {
+ if(!_isLocked.get()){
+   _lock();
+ }
+}
+
+void Lock::unlock() {
+  if(_isLocked.get()){
+    _unlock();
+  }
+}
+
+void Lock::_lock() {
   _motor.move(LOCK_DEG);
   _isLocked.set(true); 
 }
 
-void Lock::unlock() {
+void Lock::_unlock() {
   _motor.move(-LOCK_DEG);
   _isLocked.set(false); 
 }
