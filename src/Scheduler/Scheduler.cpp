@@ -13,16 +13,14 @@ Scheduler::Scheduler() :
   _dayDispensed("/dayDispensed"),
   _unlockTime("/unlockTime"),
   _unlockLambda([](){}),
-  _dispenseLambda([](){}),
-  _ntpReadyLambda([](){})
+  _dispenseLambda([](){})
 {
   _timeClient.begin();
 } 
 
 bool Scheduler::readyCheck() {
-  _timeClient.update();
-  if(_ntpReady()) {
-    _ntpReadyLambda();
+  if(!_ntpReady()) {
+    _timeClient.update();
   }
   return _ntpReady();
 }
@@ -41,15 +39,24 @@ bool Scheduler::update() {
 
 void Scheduler::scheduleUnlock(int days) {
   unsigned long scheduleTime = _timeClient.getEpochTime() + days * 86400L;
-  _unlockTime.set(scheduleTime);
+  if(_unlockTime.get() == 0 || _unlockTime.get() > scheduleTime ){
+    _unlockTime.set(scheduleTime);
+  }
+}
+
+unsigned int Scheduler::minutesUntilUnlock() {
+  if( _unlockTime.get() < _timeClient.getEpochTime() ){
+    return 0;
+  }
+  return (_unlockTime.get() - _timeClient.getEpochTime()) / 60;
+}
+
+String Scheduler::getTimestamp() {
+  return _timeClient.getFormattedTime();
 }
 
 void Scheduler::onDispense( Lambda handler ) {
   _dispenseLambda = handler;
-}
-
-void Scheduler::onNtpReady( Lambda handler ) {
-  _ntpReadyLambda = handler;
 }
 
 void Scheduler::onUnlock( Lambda handler ) {

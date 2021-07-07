@@ -15,6 +15,7 @@ class Lock
     void toggleLock();
     void lock();
     void unlock();
+    bool isLocked();
   private:
     void _lock();
     void _unlock();

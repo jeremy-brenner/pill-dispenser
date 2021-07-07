@@ -1,4 +1,4 @@
-#define DEBUG true
+#define DEBUG false
 
 #define BUTTON_PIN 15
 

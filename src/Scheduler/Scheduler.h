@@ -23,18 +23,18 @@ class Scheduler
     void scheduleUnlock(int days);
     void onUnlock( Lambda fn );
     void onDispense( Lambda fn );
-    void onNtpReady( Lambda fn );
+    unsigned int minutesUntilUnlock();
+    String getTimestamp();
   private:
     WiFiUDP _ntpUDP;
     NTPClient _timeClient;
-    bool _ntpReady();
     bool _shouldDispense();
     bool _shouldUnlock();
+    bool _ntpReady();
     ESPFlash<int> _dayDispensed;
     ESPFlash<unsigned long> _unlockTime;
     Lambda _unlockLambda;
     Lambda _dispenseLambda;
-    Lambda _ntpReadyLambda;
 };
 
 #endif

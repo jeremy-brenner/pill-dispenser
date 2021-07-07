@@ -1,6 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h> 
-#include <ESPFlash.h>
+#include <ArduinoJson.h>
 
 #include "src/Motor/Motor.h"
 #include "src/Lock/Lock.h"
@@ -15,7 +15,6 @@ Scheduler scheduler;
 Lock lock;
 Button button(BUTTON_PIN);
 Motor pillMotor(PILL_PINS);
-bool ntpReady = false;
 
 void setup() {
   Serial.begin(115200);
@@ -23,8 +22,7 @@ void setup() {
   Serial.println();
 
   connectToWifi();
-
-  scheduler.onNtpReady( []() { ntpReady = true; } );
+  
   scheduler.onDispense( []() { dispensePill(); } );
   scheduler.onUnlock( []() { lock.unlock(); } );
   
@@ -33,7 +31,6 @@ void setup() {
     scheduler.scheduleUnlock(30);
   });
   
-
   if(DEBUG) {
     server.on("/lock", []() { lock.lock(); sendOk(); });           
     server.on("/unlock", []() { lock.unlock(); sendOk(); });           
@@ -44,6 +41,9 @@ void setup() {
     scheduler.scheduleUnlock(1);
     sendOk(); 
   });           
+  server.on("/status", []() {
+    sendStatus();
+  });
 
   server.onNotFound([]() { sendNotFound(); });       
   server.begin();
@@ -53,7 +53,7 @@ void setup() {
 }
 
 void loop() {
-  if(!ntpReady && !scheduler.readyCheck()) {
+  if(!scheduler.readyCheck()) {
     Serial.println("Ntp not ready, bailing");
     delay(1000);
     return;
@@ -93,4 +93,19 @@ void sendNotFound() {
 
 void sendOk() {
   server.send(200, "text/plain", "OK"); 
+}
+
+String systemStatus() {
+  StaticJsonDocument<200> doc;
+  doc["isLocked"] = String(lock.isLocked());
+  doc["minutesUntilUnlock"] = String(scheduler.minutesUntilUnlock());
+  doc["timestamp"] = scheduler.getTimestamp();
+  doc["debug"] = String(DEBUG);
+  String status;
+  serializeJson(doc, status);
+  return status;
+}
+
+void sendStatus() {
+  server.send(200, "text/plain", systemStatus()); 
 }

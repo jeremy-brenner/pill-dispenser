@@ -26,6 +26,10 @@ void Lock::unlock() {
   }
 }
 
+bool Lock::isLocked() {
+  return _isLocked.get();
+}
+
 void Lock::_lock() {
   _motor.move(LOCK_DEG);
   _isLocked.set(true); 
