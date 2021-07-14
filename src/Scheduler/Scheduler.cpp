@@ -37,10 +37,10 @@ bool Scheduler::update() {
   }
 }
 
-void Scheduler::scheduleUnlock(int days) {
-  unsigned long scheduleTime = _timeClient.getEpochTime() + days * 86400L;
+void Scheduler::scheduleUnlock(int hours) {
+  unsigned long scheduleTime = _timeClient.getEpochTime() + hours * 3600L;
   if(_unlockTime.get() == 0 || _unlockTime.get() > scheduleTime ){
-    _unlockTime.set(scheduleTime);
+    _unlockTime.set(hours == 0 ? 0 : scheduleTime);
   }
 }
 

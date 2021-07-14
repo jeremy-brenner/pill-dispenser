@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h> 
 #include <ArduinoJson.h>
+#include <uri/UriBraces.h>
 
 #include "src/Motor/Motor.h"
 #include "src/Lock/Lock.h"
@@ -23,29 +24,24 @@ void setup() {
 
   connectToWifi();
   
-  scheduler.onDispense( []() { dispensePill(); } );
+  scheduler.onDispense(dispensePill);
   scheduler.onUnlock( []() { lock.unlock(); } );
   
-  button.onPress( []() { 
-    lock.lock(); 
-    scheduler.scheduleUnlock(30);
-  });
+  button.onPress(buttonPress);
   
   if(DEBUG) {
     server.on("/lock", []() { lock.lock(); sendOk(); });           
     server.on("/unlock", []() { lock.unlock(); sendOk(); });           
     server.on("/toggleLock", []() { lock.toggleLock(); sendOk(); });           
     server.on("/nextPill", []() { dispensePill(); sendOk(); }); 
+    server.on("/clearSchedule", []() { scheduler.scheduleUnlock(0); sendOk(); }); 
   }
-  server.on("/scheduleUnlock", []() { 
-    scheduler.scheduleUnlock(1);
-    sendOk(); 
-  });           
-  server.on("/status", []() {
-    sendStatus();
-  });
+  
+  server.on(UriBraces("/scheduleUnlock/{}"), scheduleUnlock);    
+       
+  server.on("/status", sendStatus);
 
-  server.onNotFound([]() { sendNotFound(); });       
+  server.onNotFound(sendNotFound);       
   server.begin();
   
   Serial.println("End setup");
@@ -64,6 +60,25 @@ void loop() {
   button.update();
   
   delay(100);
+}
+
+void buttonPress() {
+   if(!lock.isLocked()) {
+      lock.lock(); 
+      scheduler.scheduleUnlock(30*24);
+    }else{
+      scheduler.scheduleUnlock(1*24);
+    }
+}
+
+void scheduleUnlock() {
+  int hours = server.pathArg(0).toInt();
+  if(hours >= 24) {
+    scheduler.scheduleUnlock(hours);
+    sendOk(); 
+  } else {
+    sendBadRequest();
+  }
 }
 
 void dispensePill() {
@@ -86,6 +101,10 @@ void connectToWifi() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 }
+
+void sendBadRequest() {
+  server.send(400, "text/plain", "400: Bad Request"); 
+} 
 
 void sendNotFound() {
   server.send(404, "text/plain", "404: Not found"); 
