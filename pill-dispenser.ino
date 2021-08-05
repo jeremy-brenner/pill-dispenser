@@ -30,7 +30,6 @@ void setup() {
   button.onPress(buttonPress);
   
   if(DEBUG) {
-    server.on("/lock", []() { lock.lock(); sendOk(); });           
     server.on("/unlock", []() { lock.unlock(); sendOk(); });           
     server.on("/toggleLock", []() { lock.toggleLock(); sendOk(); });           
     server.on("/nextPill", []() { dispensePill(); sendOk(); }); 
@@ -38,7 +37,7 @@ void setup() {
   }
   
   server.on(UriBraces("/scheduleUnlock/{}"), scheduleUnlock);    
-       
+  server.on("/lock", []() { lock.lock(); sendOk(); });           
   server.on("/status", sendStatus);
 
   server.onNotFound(sendNotFound);       
@@ -65,16 +64,16 @@ void loop() {
 void buttonPress() {
    if(!lock.isLocked()) {
       lock.lock(); 
-      scheduler.scheduleUnlock(30*24);
+      scheduler.scheduleUnlock(30*24*60);
     }else{
-      scheduler.scheduleUnlock(1*24);
+      scheduler.scheduleUnlock(1*24*60);
     }
 }
 
 void scheduleUnlock() {
-  int hours = server.pathArg(0).toInt();
-  if(hours >= 24) {
-    scheduler.scheduleUnlock(hours);
+  int minutes = server.pathArg(0).toInt();
+  if(minutes >= 24*60) {
+    scheduler.scheduleUnlock(minutes);
     sendOk(); 
   } else {
     sendBadRequest();
@@ -117,8 +116,9 @@ void sendOk() {
 String systemStatus() {
   StaticJsonDocument<200> doc;
   doc["isLocked"] = String(lock.isLocked());
-  doc["minutesUntilUnlock"] = String(scheduler.minutesUntilUnlock());
-  doc["timestamp"] = scheduler.getTimestamp();
+  doc["unlockTime"] = String(scheduler.getUnlockTime());
+  doc["currentTime"] = String(scheduler.getCurrentTime());
+  doc["readyTime"] = String(scheduler.getReadyTime());
   doc["debug"] = String(DEBUG);
   String status;
   serializeJson(doc, status);

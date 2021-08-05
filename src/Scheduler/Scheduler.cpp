@@ -7,9 +7,12 @@
 
 #include "../../schedule.h"
 
+#define TIME_OFFSET TIME_OFFSET_HOURS*3600L
+
 Scheduler::Scheduler() :
   _ntpUDP(),
   _timeClient(_ntpUDP, TIME_OFFSET),
+  _readyTime(0), 
   _dayDispensed("/dayDispensed"),
   _unlockTime("/unlockTime"),
   _unlockLambda([](){}),
@@ -37,22 +40,23 @@ bool Scheduler::update() {
   }
 }
 
-void Scheduler::scheduleUnlock(int hours) {
-  unsigned long scheduleTime = _timeClient.getEpochTime() + hours * 3600L;
+void Scheduler::scheduleUnlock(int minutes) {
+  unsigned long scheduleTime = _timeClient.getEpochTime() + minutes * 60L;
   if(_unlockTime.get() == 0 || _unlockTime.get() > scheduleTime ){
-    _unlockTime.set(hours == 0 ? 0 : scheduleTime);
+    _unlockTime.set(minutes == 0 ? 0 : scheduleTime);
   }
 }
 
-unsigned int Scheduler::minutesUntilUnlock() {
-  if( _unlockTime.get() < _timeClient.getEpochTime() ){
-    return 0;
-  }
-  return (_unlockTime.get() - _timeClient.getEpochTime()) / 60;
+unsigned long Scheduler::getUnlockTime() {
+  return _unlockTime.get();
 }
 
-String Scheduler::getTimestamp() {
-  return _timeClient.getFormattedTime();
+unsigned long Scheduler::getCurrentTime() {
+  return _timeClient.getEpochTime();
+}
+
+unsigned long Scheduler::getReadyTime() {
+  return _readyTime;
 }
 
 void Scheduler::onDispense( Lambda handler ) {
@@ -74,6 +78,9 @@ bool Scheduler::_shouldUnlock() {
 }
 
 bool Scheduler::_ntpReady() {
-  return _timeClient.getEpochTime()-TIME_OFFSET > SANE_TIME;
+  if( _readyTime == 0 && _timeClient.getEpochTime()-TIME_OFFSET > SANE_TIME ) {
+    _readyTime = _timeClient.getEpochTime();
+  }
+  return _readyTime > 0;
 }
   

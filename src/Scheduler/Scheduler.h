@@ -20,14 +20,16 @@ class Scheduler
     Scheduler();
     bool update();
     bool readyCheck();
-    void scheduleUnlock(int days);
+    void scheduleUnlock(int minutes);
     void onUnlock( Lambda fn );
     void onDispense( Lambda fn );
-    unsigned int minutesUntilUnlock();
-    String getTimestamp();
+    unsigned long getUnlockTime();
+    unsigned long getCurrentTime();
+    unsigned long getReadyTime();
   private:
     WiFiUDP _ntpUDP;
     NTPClient _timeClient;
+    unsigned long _readyTime;
     bool _shouldDispense();
     bool _shouldUnlock();
     bool _ntpReady();
