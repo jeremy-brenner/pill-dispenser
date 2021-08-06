@@ -11,6 +11,9 @@
 #include "config.h"
 #include "wifi.h"
 
+
+#define MINUTES_IN_A_DAY 1440 
+
 ESP8266WebServer server(80);
 Scheduler scheduler;
 Lock lock;
@@ -64,15 +67,15 @@ void loop() {
 void buttonPress() {
    if(!lock.isLocked()) {
       lock.lock(); 
-      scheduler.scheduleUnlock(30*24*60);
+      scheduler.scheduleUnlock(30*MINUTES_IN_A_DAY);
     }else{
-      scheduler.scheduleUnlock(1*24*60);
+      scheduler.scheduleUnlock(MINUTES_IN_A_DAY);
     }
 }
 
 void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
-  if(minutes >= 24*60) {
+  if(minutes >= MINUTES_IN_A_DAY) {
     scheduler.scheduleUnlock(minutes);
     sendOk(); 
   } else {
