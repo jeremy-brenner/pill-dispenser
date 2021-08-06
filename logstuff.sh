@@ -2,8 +2,6 @@
 
 while `true`; do 
   ds=`date -Idate`
-  status=`curl pillbox/status 2>/dev/null`
-  echo ${status} >> log-${ds}.txt
-  echo ${status}
+  curl -sS -m 2 -w "\n" pillbox/status 2>&1 | tee -a log-${ds}.txt
   sleep 5
 done
