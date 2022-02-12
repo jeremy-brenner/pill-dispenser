@@ -14,6 +14,7 @@
 
 #define MINUTES_IN_A_DAY 1440 
 
+
 ESP8266WebServer server(80);
 Scheduler scheduler;
 Lock lock;
@@ -56,7 +57,6 @@ void loop() {
     delay(1000);
     return;
   }
-  
   scheduler.update();
   server.handleClient();
   button.update();
@@ -75,7 +75,7 @@ void buttonPress() {
 
 void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
-  if(minutes >= MINUTES_IN_A_DAY) {
+  if(minutes >= MINUTES_IN_A_DAY/2) {
     scheduler.scheduleUnlock(minutes);
     sendOk(); 
   } else {

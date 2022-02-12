@@ -1,7 +1,7 @@
 #include "Scheduler.h"
 
 #include "Arduino.h"
-#include <NTPClient.h>
+#include "../NTPClient/NTPClient.h"
 #include <WiFiUdp.h>
 #include <ESPFlash.h>
 
@@ -13,22 +13,29 @@ Scheduler::Scheduler() :
   _ntpUDP(),
   _timeClient(_ntpUDP, TIME_OFFSET),
   _readyTime(0), 
+  _began(false),
   _dayDispensed("/dayDispensed"),
   _unlockTime("/unlockTime"),
   _unlockLambda([](){}),
   _dispenseLambda([](){})
-{
-  _timeClient.begin();
-} 
+{} 
 
 bool Scheduler::readyCheck() {
-  if(!_ntpReady()) {
-    _timeClient.update();
+  if(!_began) {
+    _timeClient.begin();
+    _began = true;
   }
-  return _ntpReady();
+  if(_readyTime == 0) {
+    _timeClient.update();
+    delay(100);
+  }
+  if(_readyTime == 0 && _timeClient.isTimeSet()) {
+    _readyTime = _timeClient.getEpochTime();
+  }
+  return _timeClient.isTimeSet();
 }
 
-bool Scheduler::update() {
+void Scheduler::update() {
   _timeClient.update();
   if(_shouldDispense()) {
     _dispenseLambda();
@@ -48,15 +55,15 @@ void Scheduler::scheduleUnlock(int minutes) {
 }
 
 unsigned long Scheduler::getUnlockTime() {
-  return _unlockTime.get();
+  return _timestamp( _unlockTime.get() );
 }
 
 unsigned long Scheduler::getCurrentTime() {
-  return _timeClient.getEpochTime();
+  return _timestamp( _timeClient.getEpochTime() );
 }
 
 unsigned long Scheduler::getReadyTime() {
-  return _readyTime;
+  return _timestamp( _readyTime );
 }
 
 void Scheduler::onDispense( Lambda handler ) {
@@ -65,6 +72,10 @@ void Scheduler::onDispense( Lambda handler ) {
 
 void Scheduler::onUnlock( Lambda handler ) {
   _unlockLambda = handler;
+}
+
+unsigned long Scheduler::_timestamp(unsigned long time) {
+  return time - TIME_OFFSET;
 }
 
 bool Scheduler::_shouldDispense() {
@@ -77,10 +88,3 @@ bool Scheduler::_shouldUnlock() {
   return _unlockTime.get() != 0 && _unlockTime.get() < _timeClient.getEpochTime();
 }
 
-bool Scheduler::_ntpReady() {
-  if( _readyTime == 0 && _timeClient.getEpochTime()-TIME_OFFSET > SANE_TIME ) {
-    _readyTime = _timeClient.getEpochTime();
-  }
-  return _readyTime > 0;
-}
-  

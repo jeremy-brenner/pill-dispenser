@@ -5,20 +5,18 @@
 #define Scheduler_h
 
 #include "Arduino.h"
-#include <NTPClient.h>
+#include "../NTPClient/NTPClient.h"
 #include <WiFiUdp.h>
 #include <ESPFlash.h>
 
-
-#define SANE_TIME 1624000000
-
+                
 typedef void (*Lambda)();
 
 class Scheduler
 {
   public:
     Scheduler();
-    bool update();
+    void update();
     bool readyCheck();
     void scheduleUnlock(int minutes);
     void onUnlock( Lambda fn );
@@ -29,7 +27,9 @@ class Scheduler
   private:
     WiFiUDP _ntpUDP;
     NTPClient _timeClient;
+    bool _began;
     unsigned long _readyTime;
+    unsigned long _timestamp(unsigned long time);
     bool _shouldDispense();
     bool _shouldUnlock();
     bool _ntpReady();

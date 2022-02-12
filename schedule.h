@@ -1,2 +1,2 @@
+#define DISPENSE_TIME 700
 #define TIME_OFFSET_HOURS -5
-#define DISPENSE_TIME 600
