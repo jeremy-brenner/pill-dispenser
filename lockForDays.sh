@@ -1,5 +1,7 @@
 #!/bin/bash
 
+## Open on the morning of the nth day.
+
 OPEN_HOUR=8
 
 MIN=`date +%M`

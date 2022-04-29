@@ -11,10 +11,6 @@
 #include "config.h"
 #include "wifi.h"
 
-
-#define MINUTES_IN_A_DAY 1440 
-
-
 ESP8266WebServer server(80);
 Scheduler scheduler;
 Lock lock;
@@ -28,7 +24,7 @@ void setup() {
 
   connectToWifi();
   
-  scheduler.onDispense(dispensePill);
+  scheduler.onDispense(doDispense);
   scheduler.onUnlock( []() { lock.unlock(); } );
   
   button.onPress(buttonPress);
@@ -36,7 +32,8 @@ void setup() {
   if(DEBUG) {
     server.on("/unlock", []() { lock.unlock(); sendOk(); });           
     server.on("/toggleLock", []() { lock.toggleLock(); sendOk(); });           
-    server.on("/nextPill", []() { dispensePill(); sendOk(); }); 
+    server.on("/dispensePill", []() { dispensePill(); sendOk(); }); 
+    server.on("/doDispense", []() { doDispense(); sendOk(); }); 
     server.on("/clearSchedule", []() { scheduler.scheduleUnlock(0); sendOk(); }); 
   }
   
@@ -69,13 +66,13 @@ void buttonPress() {
       lock.lock(); 
       scheduler.scheduleUnlock(30*MINUTES_IN_A_DAY);
     }else{
-      scheduler.scheduleUnlock(MINUTES_IN_A_DAY);
+      scheduler.scheduleUnlock(MINIMUM_UNLOCK_TIME);
     }
 }
 
 void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
-  if(minutes >= MINUTES_IN_A_DAY/2) {
+  if(minutes >= MINIMUM_UNLOCK_TIME) {
     scheduler.scheduleUnlock(minutes);
     sendOk(); 
   } else {
@@ -83,16 +80,28 @@ void scheduleUnlock() {
   }
 }
 
-void dispensePill() {
+void doDispense() {
   Serial.println("Dispensing");
+  for (int i = 0; i < PILLS_PER_DAY; i++) { 
+    dispensePill();
+    delay(500);
+  }
+}
+
+void dispensePill() {
   pillMotor.move(PILL_DEG);
 }
 
 void connectToWifi() {
   Serial.print("Configuring access point...");
-  WiFi.mode(WIFI_STA);
-  WiFi.hostname(WIFI_HOSTNAME);
+  WiFi.mode(WIFI_AP_STA);
   delay(1000);
+  IPAddress localIP(192,168,1,1);
+  IPAddress gateway(192,168,1,0);
+  IPAddress subnet(255,255,255,0);
+  WiFi.softAPConfig(localIP, gateway, subnet);
+  WiFi.softAP(AP_SSID, AP_PASS, AP_CHANNEL, AP_HIDDEN);  
+  WiFi.hostname(WIFI_HOSTNAME);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -122,6 +131,7 @@ String systemStatus() {
   doc["unlockTime"] = String(scheduler.getUnlockTime());
   doc["currentTime"] = String(scheduler.getCurrentTime());
   doc["readyTime"] = String(scheduler.getReadyTime());
+  doc["minimumUnlockTime"] = String(MINIMUM_UNLOCK_TIME);
   doc["debug"] = String(DEBUG);
   String status;
   serializeJson(doc, status);
