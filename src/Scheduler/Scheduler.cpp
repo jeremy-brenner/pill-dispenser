@@ -49,9 +49,7 @@ void Scheduler::update() {
 
 void Scheduler::scheduleUnlock(int minutes) {
   unsigned long scheduleTime = _timeClient.getEpochTime() + minutes * 60L;
-  if(_unlockTime.get() == 0 || _unlockTime.get() > scheduleTime ){
-    _unlockTime.set(minutes == 0 ? 0 : scheduleTime);
-  }
+  _unlockTime.set(minutes == 0 ? 0 : scheduleTime);
 }
 
 unsigned long Scheduler::getUnlockTime() {
