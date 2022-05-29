@@ -4,7 +4,7 @@
 
 #define PILL_DEG 45
 
-#define PILLS_PER_DAY 2
+#define PILLS_PER_DAY 1
 #define MINUTES_IN_A_DAY 1440
 #define MINIMUM_UNLOCK_TIME MINUTES_IN_A_DAY
 

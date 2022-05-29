@@ -37,7 +37,12 @@ t=lw*2;
 teethPerPill=3;
 pillsPerRotation=8;
 
-pr=3.5;
+pr=3.6;  //30mg
+spr=3.1; //20mg
+
+c_or=53.5;
+c_ir=46.025; // for second pill
+
 ph=21;
 
 hexR=4.5;
@@ -97,7 +102,6 @@ translate([100,-34,-14.5]) {
     lidMotorPost();
   }
 }
-
 
 if(mountRing) {
   translate([0,0,8.25]) mountRing();  
@@ -317,58 +321,45 @@ module tray() {
 }
 
 module bottomLayer() {
+  or=pr+0.5+t*2.5;
+  ir=pr+0.5+t*1.5;
+
   translate([0,0,1.5]) rotate([0,0,45]) ring(4,90,52) {
     cylinder(r=3,h=13);
     translate([0,0,13]) cylinder(r=1.8,h=3.8);
   }
-  difference() {
-    union() {
-      translate([-60.5,0,14.5]) rotate([90,0,0]) intersection() {
-        difference() {
-          torus(8.5,pr+0.5+t*2.5);
-          translate([0,0,-50]) cylinder(h=100,r=8.5);
+  translate([-c_or-8.5,-or,0]) {
+    difference() {
+      cube([20.5,or*2,14.5]);
+      translate([21-or,or,15.5]) union() {
+        cylinder(r=ir,h=5);
+        sphere(r=ir);
+        rotate([0,-122,0]) {
+          cylinder(r=ir,h=30);
+          translate([0,-ir,0]) cube([100,ir*2,20]);
         }
-        translate([0,-100,-50]) cube([100,100,100]);
-      }
-      track(3);
-      intersection() {
-        hexGrid(10,3,t*2,11,11,[],[]);
-        translate([0,0,-1]) cylinder(r=55.5,h=10.5);
+
       }
     }
-    translate([-60.5,0,14.5]) rotate([90,0,0]) torus(8.5,pr+0.5+t*1.5);
   }
- 
+  track(3);
+  intersection() {
+    hexGrid(10,3,t*2,11,11,[],[]);
+    translate([0,0,-1]) cylinder(r=55.5,h=10.5);
+  }
 }
 
 module track(h) {
+  br=c_or+pr*0.66;
+  lr=c_ir-spr*0.66;
   difference() {
-    cylinder(r=55.5,h=h);
-    translate([0,0,-0.5]) cylinder(r=49,h=h+1);
+    cylinder(r=br,h=h);
+    translate([0,0,-0.5]) cylinder(r=lr,h=h+1);
   } 
 }
 
 module mountRing() {
-  difference() {
-    union() {
-      track(3.5);
-      translate([-52,0,0]) cylinder(r=pr+0.5+t*2,h=3.5);
-    }
-    translate([-52,0,-0.5]) cylinder(r=pr+0.5+t,h=9);
-    translate([0,-9,-0.5]) cube([100,18,1.5]);
-  }
-  translate([0,0,-3.8]) rotate([0,0,45]) ring(4,90,52) cylinder(r=1.8,h=3.8);
-
-}
-
-module torus(r1,r2) {
-  rotate_extrude(convexity = 10, $fn=$fn)
-    translate([r1, 0, 0])
-    circle(r = r2, $fn=$fn/2);
-}
-
-module mainMount() {
-  skipCells=[
+    skipCells=[
     [10,5],[10,6],
     [11,4],[11,5],[11,6],
     [12,4],[12,5],[12,6],[12,7],
@@ -391,22 +382,57 @@ module mainMount() {
     [1,4],[1,5],[1,6],
     [0,4],[0,5],[0,6],[0,7],
   ];
-  difference() { 
-    union() {
-      intersection() {
-        translate([0,0,4]) hexGrid(5.35,4,t,13,11,skipCells,[]);
-        cylinder(r=55.5,h=10.5);
-      }
-      translate([-52,0,0]) cylinder(r=pr+0.5+t*2,h=8);
-      track(8);
+  intersection() {
+    translate([0,0,0]) hexGrid(5.35,3.5,t,13,11,skipCells,[]);
+    difference() {
+      cylinder(r=55.5,h=10.5);
+      translate([0,0,-0.1]) cylinder(r=15,h=10.7);
     }
-    translate([0,0,-1]) cylinder(r=bearingOuterR+4,h=10);
-    motorPosition() translate([0,0,-1]) cylinder(r=22,h=11);
-    translate([-52,0,-0.5]) cylinder(r=pr+0.5+t,h=9);
-    translate([0,0,-0.5]) rotate([0,0,45]) ring(4,90,52) cylinder(r=2,h=9);
   }
+  translate([0,0,-4.5]) bearingHole();
+  difference() {
+    union() {
+      track(3.5);
+      hull() {
+        translate([-c_or,0,0]) cylinder(r=pr+0.5+t*2,h=3.5);
+        translate([-c_ir,0,0]) cylinder(r=spr+0.5+t*2,h=3.5);
+      }
+    }
+    hull() {
+      translate([-c_or,0,-0.5]) cylinder(r=pr+0.5+t,h=9);
+      translate([-c_ir,0,-0.5]) cylinder(r=spr+0.5+t,h=9);
+    }
+    translate([0,-9,-0.5]) cube([100,18,1.5]);
+  }
+  translate([0,0,-3.8]) rotate([0,0,45]) ring(4,90,52) cylinder(r=1.8,h=3.8);
+}
 
-  bearingHole();
+module torus(r1,r2) {
+  rotate_extrude(convexity = 10, $fn=$fn)
+    translate([r1, 0, 0])
+    circle(r = r2, $fn=$fn/2);
+}
+
+module mainMount() {
+  intersection() {
+    difference() { 
+      union() {
+        translate([-c_or,0,0]) cylinder(r=pr+0.5+t*2,h=8);
+        translate([-c_ir,0,0]) cylinder(r=spr+0.5+t*2,h=8);
+        track(8);
+      }
+      translate([0,0,-1]) cylinder(r=bearingOuterR+4,h=10);
+      motorPosition() translate([0,0,-1]) cylinder(r=22,h=11);
+      hull() {
+        translate([-c_or,0,-0.5]) cylinder(r=pr+0.5+t,h=9);
+        translate([-c_ir,0,-0.5]) cylinder(r=spr+0.5+t,h=9);
+      }
+      translate([0,0,-0.5]) rotate([0,0,45]) ring(4,90,52) cylinder(r=2,h=9);
+      translate([35,-4,4.5]) cube([20,8,5]);
+    }
+    cw=95;
+    translate([-100,-cw/2,0]) cube([200,cw,10]);
+  }
 
   motorPosition() rotate([0,0,90]) motorMount();
 }
@@ -442,8 +468,8 @@ module bigGear() {
     translate([0,0,rim_thickness+1.5])    cylinder(r=gr,h=1);
 
     } 
-    translate([0,0,-1]) cylinder(r=52,h=10);
-    translate([0,0,-1]) ring(pillHoles,360/pillHoles,52) cylinder(r=pr+0.6+t,h=ph+2);
+    translate([0,0,-1]) cylinder(r=c_or,h=10);
+    translate([0,0,-1]) ring(pillHoles,360/pillHoles,c_or) cylinder(r=pr+0.6+t,h=ph+2);
   }
 
 }
@@ -481,24 +507,26 @@ module carouselCap() {
 module carousel() {
   difference() {
     union() {
-      ring(pillHoles,360/pillHoles,52) cylinder(r=pr+0.5+t,h=ph);
+      ring(pillHoles,360/pillHoles,c_or) cylinder(r=pr+0.5+t,h=ph);
+      ring(pillHoles,360/pillHoles,c_ir) cylinder(r=spr+0.5+t,h=ph);
 
       intersection() {
         hexGrid(hexR,4,t,15,13,[],[]);
-        cylinder(r=52,h=10);
+        cylinder(r=c_or,h=10);
       }
     }
-    translate([0,0,-1]) ring(pillHoles,360/pillHoles,52) cylinder(r=pr+0.5,h=ph+2);
+    translate([0,0,-1]) ring(pillHoles,360/pillHoles,c_or) cylinder(r=pr+0.5,h=ph+2);
+    translate([0,0,-1]) ring(pillHoles,360/pillHoles,c_ir) cylinder(r=spr+0.5,h=ph+2);
   }
 }
 
 
-module bearingPost() intersection() {
+module bearingPost() translate([0,0,3.8]) intersection() {
   union() {
     cylinder(r=4,h=8);
-    translate([0,0,8]) cylinder(r=5,h=3);
+    translate([0,0,8]) cylinder(r=5,h=0.8);
 
-    translate([0,0,11]) cylinder(r=hexCircumradius(hexR-t),h=5,$fn=6);
+    translate([0,0,8.8]) cylinder(r=hexCircumradius(hexR-t),h=5,$fn=6);
   }
   translate([-50,0.1,0]) cube([100,100,100]);
 }
