@@ -8,4 +8,4 @@
 #define MINUTES_IN_A_DAY 1440
 #define MINIMUM_UNLOCK_TIME MINUTES_IN_A_DAY
 
-const int PILL_PINS[4] = { 5, 4, 0, 2 };
+const int PILL_PINS[4] = { 0, 2, 9, 10 };
