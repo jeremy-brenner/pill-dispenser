@@ -1,5 +1,10 @@
 #!/bin/bash
 
+if [ "x${1}x" != "xx" ]; then
+  HOSTNAME="${1}"
+else
+  HOSTNAME="pillbox"
+fi
 
 prettyTime () {
   SECONDS=$(( $1%60 ))
@@ -17,7 +22,7 @@ dateStamp () {
   echo `date --date=@${1}`
 }
 
-STATUS=`curl -s pillbox/status`
+STATUS=`curl -s ${HOSTNAME}/status`
 
 if [ ! $STATUS ] ; then
   echo "ERROR"
@@ -77,7 +82,7 @@ fi
 
 printf "${PFS}" "State:" "${STATE}"
 printf "${PFS}" "Ready time:" "${READY_DATESTAMP}"
-printf "${PFS}" "Sytem time:" "${CURRENT_DATESTAMP}"
+printf "${PFS}" "System time:" "${CURRENT_DATESTAMP}"
 printf "${PFS}" "Time to unlock:" "${UNLOCK_DATESTAMP}" "${MINUTES_TO_UNLOCK}m" "(${TIME_TO_UNLOCK})"
 printf "${PFS}" "Minimum Unlock Time:" "${MINIMUM_UNLOCK_DATESTAMP}" "${MINIMUM_UNLOCK_TIME}m" "(${MINIMUM_TIME_TO_UNLOCK})"
 
