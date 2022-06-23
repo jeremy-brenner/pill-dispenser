@@ -19,8 +19,8 @@ module hexGrid(hexInradius,height,supportThickness,xLen,yLen,skipCells,cappedCel
       for ( iy = [0 : yLen-even] ){ 
         y = yu*iy+eu*even;
 
-        shouldSkip = search([[ix,iy]], skipCells)[0] >= 0;
-        shouldCap = search([[ix,iy]], cappedCells)[0] >= 0;
+        shouldSkip = skipCells[search([[ix,iy]], skipCells)[0]] != undef;
+        shouldCap = cappedCells[search([[ix,iy]], cappedCells)[0]] != undef;
         
         if(!shouldSkip) {
           color(color, shouldSkip ? 0.1 : 1) translate([x,y,0]) hex(hexInradius,supportThickness,height,shouldCap);
