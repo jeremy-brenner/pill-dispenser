@@ -2,11 +2,14 @@
 #include <ESP8266WebServer.h> 
 #include <ArduinoJson.h>
 #include <uri/UriBraces.h>
+#include <TimeLib.h>
+#include <RTClib.h>
 
 #include "src/Motor/Motor.h"
 #include "src/Lock/Lock.h"
 #include "src/Scheduler/Scheduler.h"
 #include "src/Button/Button.h"
+#include "src/TimeSync/TimeSync.h"
 
 #include "config.h"
 #include "wifi.h"
@@ -16,11 +19,30 @@ Scheduler scheduler;
 Lock lock;
 Button button(BUTTON_PIN);
 Motor pillMotor(PILL_PINS);
+RTC_DS3231 RTC;
+TimeSync timeSync;
+
+bool haveRTC;
+bool haveWifi;
+
+time_t time_provider()
+{
+    return RTC.now().unixtime();
+}
+
 
 void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println();
+
+  haveRTC = RTC.begin();
+  if(!haveRTC){
+    Serial.println("RTC not found");
+  }
+
+  setSyncProvider(time_provider);
+  setSyncInterval(60);
 
   connectToWifi();
   
@@ -44,20 +66,17 @@ void setup() {
   server.onNotFound(sendNotFound);       
   server.begin();
   
+  scheduler.ready();
   Serial.println("End setup");
   delay(1000);
 }
 
 void loop() {
-  if(!scheduler.readyCheck()) {
-    Serial.println("Ntp not ready, bailing");
-    delay(1000);
-    return;
-  }
+  checkWifi();
+  timeSync.update(RTC);
   scheduler.update();
   server.handleClient();
   button.update();
-  
   delay(100);
 }
 
@@ -103,14 +122,19 @@ void connectToWifi() {
   WiFi.softAP(AP_SSID, AP_PASS, AP_CHANNEL, AP_HIDDEN);  
   WiFi.hostname(WIFI_HOSTNAME);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+}
+
+void checkWifi() {
+  if (WiFi.status() == WL_CONNECTED && !haveWifi) {
+    haveWifi=true;
+    Serial.println("WiFi connected");
+    Serial.println("IP address: ");
+    Serial.println(WiFi.localIP());
   }
-  Serial.println("");
-  Serial.println("WiFi connected");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+  if(WiFi.status() != WL_CONNECTED && haveWifi) {
+    haveWifi=false;
+    Serial.println("WiFi disconnected");
+  }
 }
 
 void sendBadRequest() {
