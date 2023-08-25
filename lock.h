@@ -1,2 +1,3 @@
-#define LOCK_DEG 75
-const int LOCK_PINS[4] = { 16, 13, 12, 14 };
+#define LOCK_PIN 12
+#define LOCK_ANGLE 160
+#define UNLOCK_ANGLE 0

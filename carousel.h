@@ -1,0 +1,3 @@
+#define CAROUSEL_PIN 13
+#define REST_ANGLE 165
+#define PUSH_ANGLE 45

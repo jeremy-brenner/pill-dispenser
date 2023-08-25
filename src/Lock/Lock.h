@@ -6,7 +6,7 @@
 
 #include <ESPFlash.h>
 #include "Arduino.h"
-#include "../Motor/Motor.h"
+#include <Servo.h> 
 
 class Lock
 {
@@ -19,7 +19,8 @@ class Lock
   private:
     void _lock();
     void _unlock();
-    Motor _motor;
+    void _moveServo();
+    Servo _servo;
     ESPFlash<bool> _isLocked;
 };
 

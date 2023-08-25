@@ -5,10 +5,9 @@
 #include <TimeLib.h>
 #include <RTClib.h>
 
-#include "src/Motor/Motor.h"
 #include "src/Lock/Lock.h"
+#include "src/Carousel/Carousel.h"
 #include "src/Scheduler/Scheduler.h"
-#include "src/Button/Button.h"
 #include "src/TimeSync/TimeSync.h"
 
 #include "config.h"
@@ -17,8 +16,7 @@
 ESP8266WebServer server(80);
 Scheduler scheduler;
 Lock lock;
-Button button(BUTTON_PIN);
-Motor pillMotor(PILL_PINS);
+Carousel carousel;
 RTC_DS3231 RTC;
 TimeSync timeSync;
 
@@ -39,6 +37,8 @@ void setup() {
   haveRTC = RTC.begin();
   if(!haveRTC){
     Serial.println("RTC not found");
+  }else{
+    Serial.println("RTC found");
   }
 
   setSyncProvider(time_provider);
@@ -49,7 +49,7 @@ void setup() {
   scheduler.onDispense(doDispense);
   scheduler.onUnlock( []() { lock.unlock(); } );
   
-  button.onPress(buttonPress);
+//  button.onPress(buttonPress);
   
   if(DEBUG) {
     server.on("/unlock", []() { lock.unlock(); sendOk(); });           
@@ -76,7 +76,6 @@ void loop() {
   timeSync.update(RTC);
   scheduler.update();
   server.handleClient();
-  button.update();
   delay(100);
 }
 
@@ -84,8 +83,6 @@ void buttonPress() {
    if(!lock.isLocked()) {
       lock.lock(); 
       scheduler.scheduleUnlock(30*MINUTES_IN_A_DAY);
-    }else{
-      scheduler.scheduleUnlock(MINIMUM_UNLOCK_TIME);
     }
 }
 
@@ -108,15 +105,15 @@ void doDispense() {
 }
 
 void dispensePill() {
-  pillMotor.move(PILL_DEG);
+  carousel.next();
 }
 
 void connectToWifi() {
   Serial.print("Configuring access point...");
   WiFi.mode(WIFI_AP_STA);
   delay(1000);
-  IPAddress localIP(192,168,1,1);
-  IPAddress gateway(192,168,1,0);
+  IPAddress localIP(192,168,2,1);
+  IPAddress gateway(192,168,2,0);
   IPAddress subnet(255,255,255,0);
   WiFi.softAPConfig(localIP, gateway, subnet);
   WiFi.softAP(AP_SSID, AP_PASS, AP_CHANNEL, AP_HIDDEN);  

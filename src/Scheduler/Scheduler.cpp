@@ -21,7 +21,7 @@ void Scheduler::ready() {
 void Scheduler::update() {
   if(_shouldDispense()) {
     _dispenseLambda();
-    _dayDispensed.set(day());
+    _dayDispensed.set(_currentDay());
   }
   if(_shouldUnlock()) {
     _unlockLambda();
