@@ -1,9 +1,9 @@
 use <./rotator-tray-base.scad>;
 
-module rotatorTraySingles(r,h,centerHoleR,sections,pr,rowDistances) {
+module rotatorTraySingles(r,h,centerHoleR,sections,pr,rowDistances,angle,skipOne=1) {
   difference() {
-    rotatorTrayBase(r,h,sections,centerHoleR);
-    translate([0,0,-1]) pillHole(pr+0.4,rowDistances,4);    
+    rotatorTrayBase(r,h,sections,centerHoleR,skipOne);
+    translate([0,0,-1]) rotate([0,0,angle]) pillHole(pr+0.4,rowDistances,4);    
   }
 }
 

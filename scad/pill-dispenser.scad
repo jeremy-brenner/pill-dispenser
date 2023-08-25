@@ -1,14 +1,22 @@
-use <./rotator.scad>;
-use <./rotator-tray.scad>;
 use <./rotator-tray-base.scad>;
 use <./rotator-tray-cap.scad>;
 use <./rotator-singles.scad>;
 use <./rotator-tray-singles.scad>;
+use <./ratchet-tray.scad>;
+use <./ratchet.scad>;
 use <./lock-pole.scad>;
-use <./motor.scad>;
 use <./center-shaft.scad>;
-
+use <./rotator-gear.scad>;
+use <./bottom-tray.scad>;
+use <./bend.scad>;
+use <./servo.scad>;
 use <./pill.scad>;
+use <./cpu.scad>;
+use <./lock.scad>;
+
+pr=3.75;
+ph=21;
+t=1.2;
 
 rotatorH=10;
 rotatorT=2;
@@ -25,14 +33,18 @@ holeOr=rotatorOr-rotatorT;
 holeIr=rotatorIr+rotatorT;
 
 rotatorTrayR=rotatorOr+3;
-rotatorTrayH=rotatorH+3;
 rotatorTrayCenterHoleR=rotatorIr+0.3;
 
-t=1.2;
+ratchetTrayH=8.4;
+
+bottomTrayH=22.75;
+servoWingT=2.8;
+
 
 $fn=64;
 
 $t=0.125;
+
 
 singles();
 
@@ -41,77 +53,72 @@ singles();
 
 module singles() {
   rotatorSinglesIr=16;
-
   rowDistances=[25.25,33.25];
+
   pillsPerRow=16;
   totalPills = len(rowDistances) * pillsPerRow;
   angle = 360/totalPills;
 
-  pr=3.75;
-  ph=21;
 
-  trayR=max(rowDistances)+pr+3.5;
-  //color("red") cylinder(r=20.25,h=20);
- // rotate([0,0,angle]) translate([0,0,2.5]) rotatorSingles(pillsPerRow,rowDistances,pr,ph,t,rotatorSinglesIr);
+
+  trayH=ph+3;
+  trayR=max(rowDistances)+pr+4.5;
   
-  //rotatorTraySingles(trayR,ph+3,rotatorSinglesIr+0.3,pillsPerRow,pr,rowDistances);
+  translate([0,0,trayH*2]) rotatorTrayCap(trayR,10+2,pillsPerRow,rotatorSinglesIr+0.3,angle);
 
-  rotate([0,0,angle]) {
-    centerShaft(3,rotatorSinglesIr,false);
-    translate([0,0,-3]) {
-      difference() {
-        union() {
-         cylinder(r=rotatorSinglesIr+3,h=3);
-        }
-        translate([0,0,-0.1]) cylinder(r=9.8,h=4.2);
-      }
+  rotate([0,0,angle]) translate([0,0,2.5]) rotatorSingles(pillsPerRow,rowDistances,pr,ph,t,rotatorSinglesIr);
+  
+  rotatorTraySingles(trayR,trayH,rotatorSinglesIr+0.3,pillsPerRow,pr,rowDistances,angle);
+  translate([0,0,trayH]) rotatorTraySingles(trayR,trayH,rotatorSinglesIr+0.3,pillsPerRow,pr,rowDistances,angle);
+  translate([0,0,-ratchetTrayH]) ratchetTray(trayR,ratchetTrayH,rotatorSinglesIr+0.3,pillsPerRow,pr,ph,rowDistances,angle,t,servoWingT);  
+  
+  translate([0,0,-ratchetTrayH-bottomTrayH-2.2]) bottomTray(bottomTrayH,trayR,pr,ph,pillsPerRow,rowDistances,angle,servoWingT) ;
+
+
+
+     translate([0,0,-2.2]) rotate([0,0,angle]) rotatorGear(rotatorSinglesIr);
+    rotate([0,0,-angle*12]) translate([0,0,-6]) {
+       ratchetArmHole();
+    translate([4.5,0,0])  ratchetArmRack();
     }
-  }
-  // translate([0,0,-ph-3.5-5]) union() {
-  // difference() {
-  //   rotatorTrayBase(trayR,ph+3,pillsPerRow,trayR-2,false);
-  //   translate([trayR-10,-10,2]) cube([20,20,ph+5]);
-  // }
-  // translate([rotatorSinglesIr+0.3,-10,0]) cylinder(r=10,h=ph);
-  // }
-  // translate([rotatorSinglesIr+0.3,-10,0]) cube([20,20,ph+3]);
 
-//  translate([0,0,ph+3.5]) rotatorTrayCap(trayR,10+2,pillsPerRow,rotatorSinglesIr+0.3,angle);
 
-  
-  //  rotate([0,0,angle]) translate([0,0,-16]) lockPole(r=9.2,h=60, topInterlock=true, bottomInterlock=true);
-//translate([0,0,19.5]) lockPole(r=9.2, h=60, topInterlock=true, bottomInterlock=true);
-  //translate([0,0,25-9.5]) lockPole(r=9.2, h=25, topInterlock=true, bottomInterlock=true);
-  // translate([0,0,-30]) motor();
 
+
+  //  rotate([0,0,angle]) translate([0,0,-16]) lockPole(r=9.2,h=102, topInterlock=true, bottomInterlock=false);
+  rotate([0,0,angle]) translate([0,0,-16]) lockPole(r=9.2,h=101-trayH, topInterlock=true, bottomInterlock=false);
+   translate([-18.5,-8,-ratchetTrayH]) rotate([0,0,90]) rotate([0,90,0]) motor();
+
+
+  // cpu();
+
+
+lockO=-trayR+24;
+//  lockO=-trayR+16;
+//  lockO=-trayR+8;
+rotate([0,0,-angle]) translate([-7.5/2,lockO,-ratchetTrayH-bottomTrayH-2.2]) {
+  color("red") lock();
 }
 
 
-//rotator(rotatorT,rotatorFinT,rotatorSections,rotatorH,rotatorOr,rotatorIr);
-// rotatorTray(rotatorTrayR,rotatorTrayH,rotatorTrayCenterHoleR,holeOr,holeIr,rotatorSections);
-
-//  test($t);
-
-module test(t) {
-  // translate([rotatorIr+rotatorT,-1,20]) cube([rotatorHoleSize,2,2]);
-
-  rotate([0,0,t*360])  {
-    translate([0,0,2.5]) { 
-      color("white") rotator(rotatorT,rotatorFinT,rotatorSections,rotatorH,rotatorOr,rotatorIr);
-      // translate([rotatorIr+6,3.3,0]) pill();
-      // translate([rotatorIr+6,-3.3,0]) pill();
-    }
-    
-    translate([0,0,2.5+rotatorH+3]) { 
-      color("white") rotator(rotatorT,rotatorFinT,rotatorSections,rotatorH,rotatorOr,rotatorIr);
-      translate([rotatorIr+6,3.3,0]) pill();
-      translate([rotatorIr+6,-3.3,0]) pill();
-    }
-  }
 
 
-  color("blue") rotatorTray(rotatorTrayR,rotatorTrayH,rotatorTrayCenterHoleR,holeOr,holeIr,rotatorSections);
-  color("red") rotate([0,0,dAngle]) translate([0,0,rotatorH+3])rotatorTray(rotatorTrayR,rotatorTrayH,rotatorTrayCenterHoleR,holeOr,holeIr,rotatorSections);
 
 
+
+
+ 
 }
+
+module lockPoleBottomTest() {
+  lockPole(r=9.2,h=20, topInterlock=false, bottomInterlock=false);
+}
+
+module lockPoleTopTest() {
+  lockPole(r=9.2, h=25, topInterlock=true, bottomInterlock=true);
+}
+
+
+
+
+
