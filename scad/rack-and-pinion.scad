@@ -38,7 +38,6 @@ module pinion() {
     a=24;
     for ( i = [0 : 360/a-1] ){
       rotate([0,0,i*a]) translate([0,2,0]) rotate([0,0,45]) translate([-0.75/2,-0.75/2,-0.1]) cube([0.75,0.75,2.6]);
-      //cylinder(r=0.36,h=2.6);
     }
   }  
 }
