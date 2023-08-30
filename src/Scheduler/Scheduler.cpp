@@ -1,41 +1,48 @@
 #include "Scheduler.h"
 #include "Arduino.h"
-#include <ESPFlash.h>
+#include "../StateStorage/StateStorage.h"
 #include <TimeLib.h>
 
 
 #include "../../schedule.h"
 #define TIME_OFFSET TIME_OFFSET_HOURS*3600L
 
-Scheduler::Scheduler() :
-  _dayDispensed("/dayDispensed"),
-  _unlockTime("/unlockTime"),
+Scheduler::Scheduler(StateStorage* state) :
+  _state(state),
   _unlockLambda([](){}),
-  _dispenseLambda([](){})
+  _dispenseLambda([](){}),
+  _readyTime(0)
 {} 
 
-void Scheduler::ready() {
-  _readyTime = now();
+bool Scheduler::isReady() {
+  return _readyTime > 0;
 }
 
-void Scheduler::update() {
+void Scheduler::update(bool isTimeSet) {
+  if(!isReady() && isTimeSet) {
+    _readyTime = now();
+  }
+  if(!isReady()) {
+    Serial.println("not ready");
+    return;
+  }
   if(_shouldDispense()) {
     _dispenseLambda();
-    _dayDispensed.set(_currentDay());
+    _state->setDayDispensed(_currentDay());
   }
   if(_shouldUnlock()) {
     _unlockLambda();
-    _unlockTime.set(0);
+    _state->setUnlockTime(0);
   }
 }
 
 void Scheduler::scheduleUnlock(int minutes) {
   unsigned long scheduleTime = now() + minutes * 60L;
-  _unlockTime.set(minutes == 0 ? 0 : scheduleTime);
+  _state->setUnlockTime(minutes == 0 ? 0 : scheduleTime);
 }
 
 unsigned long Scheduler::getUnlockTime() {
-  return _unlockTime.get();
+  return _state->getUnlockTime();
 }
 
 unsigned long Scheduler::getCurrentTime() {
@@ -55,11 +62,11 @@ void Scheduler::onUnlock( Lambda handler ) {
 }
 
 bool Scheduler::_shouldDispense() {
-  return _currentDay() != _dayDispensed.get() && _currentTime() >= DISPENSE_TIME;
+  return _currentDay() != _state->getDayDispensed() && _currentTime() >= DISPENSE_TIME;
 }
 
 bool Scheduler::_shouldUnlock() {
-  return _unlockTime.get() != 0 && _unlockTime.get() < now();
+  return _state->getUnlockTime() != 0 && _state->getUnlockTime() < now();
 }
 
 unsigned long Scheduler::_offsetNow() {

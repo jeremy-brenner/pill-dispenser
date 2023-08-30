@@ -5,7 +5,7 @@
 #define Scheduler_h
 
 #include "Arduino.h"
-#include <ESPFlash.h>
+#include "../StateStorage/StateStorage.h"
 #include <TimeLib.h>
 
 typedef void (*Lambda)();
@@ -13,9 +13,10 @@ typedef void (*Lambda)();
 class Scheduler
 {
   public:
-    Scheduler();
+    Scheduler(StateStorage* state);
     void ready();
-    void update();
+    bool isReady();
+    void update(bool isTimeSet);
     void scheduleUnlock(int minutes);
     void onUnlock( Lambda fn );
     void onDispense( Lambda fn );
@@ -29,8 +30,7 @@ class Scheduler
     unsigned long _offsetNow();
     int _currentDay();
     int _currentTime();
-    ESPFlash<int> _dayDispensed;
-    ESPFlash<unsigned long> _unlockTime;
+    StateStorage* _state;
     Lambda _unlockLambda;
     Lambda _dispenseLambda;
 };

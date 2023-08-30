@@ -14,10 +14,13 @@ class TimeSync
 {
   public:
     TimeSync();
-    void update(RTC_DS3231 rtc);
+    bool isTimeSet();
+    void update();
+    void init();
   private:
     WiFiUDP _ntpUDP;
     NTPClient _timeClient;
+    bool _haveRTC;
     unsigned long _lastSynced;
     unsigned long _timestamp(unsigned long time);
 };
