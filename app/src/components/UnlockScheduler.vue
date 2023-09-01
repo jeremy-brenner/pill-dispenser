@@ -1,11 +1,14 @@
 <script setup>
 
-import { ref } from 'vue'
+import { ref, onMounted} from 'vue'
 import moment from 'moment'
 
 const props = defineProps(['currentTime', 'minimumUnlockTime'])
+const emit = defineEmits(['closeMe'])
 
-const unlockDays = ref(1);
+const unlockDays = ref();
+const input = ref(null);
+
 
 function submit(e) {
   const fullDaysMinutes = (unlockDays.value-1)*24*60;
@@ -19,8 +22,17 @@ function submit(e) {
 
   fetch(`/scheduleUnlock/${unlockMinutes}`)
     .then(() => fetch('/lock'));
-  e.target.blur()
+  e.target.blur();
+  
 }
+
+function closeMe() {
+  emit('closeMe');
+}
+
+onMounted(() => {
+  input?.value?.focus();
+})
 
 </script>
 
@@ -30,12 +42,18 @@ function submit(e) {
     <input 
       type="number" 
       @keyup.enter="submit"
+      @blur="closeMe"
       v-model="unlockDays"
+      ref="input"
     >
     days
   </div>
 </template>
 
 <style scoped>
-
+input {
+  background-color: #112639;
+  color: white;
+  width: 2rem;
+}
 </style>

@@ -17,12 +17,16 @@ bool StateStorage::getIsLocked() {
   return _isLocked;
 }
 
-int StateStorage::getDayDispensed() {
-  return _dayDispensed;
+int StateStorage::getLastDayHandled() {
+  return _lastDayHandled;
 }
 
 unsigned long StateStorage::getUnlockTime() {
   return _unlockTime;
+}
+
+unsigned int StateStorage::getPillsAvailable() {
+  return _pillsAvailable;
 }
 
 void StateStorage::setIsLocked(bool isLocked) {
@@ -32,9 +36,9 @@ void StateStorage::setIsLocked(bool isLocked) {
   }
 }
 
-void StateStorage::setDayDispensed(int dayDispensed) {
-  if(dayDispensed != _dayDispensed) {
-    _dayDispensed = dayDispensed;
+void StateStorage::setLastDayHandled(int lastDayHandled) {
+  if(lastDayHandled != _lastDayHandled) {
+    _lastDayHandled = lastDayHandled;
     _saveStoredState();
   }
 }
@@ -46,8 +50,15 @@ void StateStorage::setUnlockTime(unsigned long unlockTime) {
   }
 }
 
-void StateStorage::_getStoredState() {
+void StateStorage::setPillsAvailable(unsigned int pillsAvailable) {
+    if(pillsAvailable != _pillsAvailable) {
+    _pillsAvailable = pillsAvailable;
+    _saveStoredState();
+  }
+}
 
+
+void StateStorage::_getStoredState() {
   if (_fs->exists(STATEFILE)) {
     StaticJsonDocument<200> stateJson;
     File file = _fs->open(STATEFILE, "r");
@@ -59,17 +70,17 @@ void StateStorage::_getStoredState() {
       Serial.println(error.f_str());
     }
     _isLocked = stateJson["isLocked"] == "1";
-    _dayDispensed = stateJson["dayDispensed"];
+    _lastDayHandled = stateJson["lastDayHandled"];
     _unlockTime = stateJson["unlockTime"];
+    _pillsAvailable = stateJson["pillsAvailable"];
     Serial.println("Got state");
     Serial.println(stateString);
-    Serial.println(_dayDispensed);
-    Serial.println(_unlockTime);
   }else{
     Serial.println("no state file, setting defaults");
     _isLocked = false;
-    _dayDispensed = 0;
+    _lastDayHandled = -1;
     _unlockTime = 0;
+    _pillsAvailable = 0;
     _saveStoredState();
   }
 }
@@ -78,8 +89,9 @@ void StateStorage::_saveStoredState() {
   Serial.println("saving state");
   StaticJsonDocument<200> stateJson;
   stateJson["isLocked"] = String(_isLocked);
-  stateJson["dayDispensed"] = String(_dayDispensed);
+  stateJson["lastDayHandled"] = String(_lastDayHandled);
   stateJson["unlockTime"] = String(_unlockTime);
+  stateJson["pillsAvailable"] = String(_pillsAvailable);
   String state;
   serializeJson(stateJson, state);
   File file = _fs->open(STATEFILE, "w");

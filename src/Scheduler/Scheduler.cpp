@@ -10,7 +10,7 @@
 Scheduler::Scheduler(StateStorage* state) :
   _state(state),
   _unlockLambda([](){}),
-  _dispenseLambda([](){}),
+  _nextDayLambda([](){}),
   _readyTime(0)
 {} 
 
@@ -26,9 +26,12 @@ void Scheduler::update(bool isTimeSet) {
     Serial.println("not ready");
     return;
   }
-  if(_shouldDispense()) {
-    _dispenseLambda();
-    _state->setDayDispensed(_currentDay());
+  if(_isFirstRun()) {
+    _state->setLastDayHandled(_currentDay());
+  }
+  if(_isNextDay()) {
+    _nextDayLambda();
+    _state->setLastDayHandled(_currentDay());
   }
   if(_shouldUnlock()) {
     _unlockLambda();
@@ -53,16 +56,20 @@ unsigned long Scheduler::getReadyTime() {
   return _readyTime;
 }
 
-void Scheduler::onDispense( Lambda handler ) {
-  _dispenseLambda = handler;
+void Scheduler::onNextDay( Lambda handler ) {
+  _nextDayLambda = handler;
 }
 
 void Scheduler::onUnlock( Lambda handler ) {
   _unlockLambda = handler;
 }
 
-bool Scheduler::_shouldDispense() {
-  return _currentDay() != _state->getDayDispensed() && _currentTime() >= DISPENSE_TIME;
+bool Scheduler::_isFirstRun() {
+  return _state->getLastDayHandled() == -1;
+}
+
+bool Scheduler::_isNextDay() {
+  return _currentDay() != _state->getLastDayHandled() && _currentTime() >= DISPENSE_TIME;
 }
 
 bool Scheduler::_shouldUnlock() {

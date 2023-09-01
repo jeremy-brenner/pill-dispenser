@@ -1,7 +1,7 @@
-#define DEBUG false
+#define DEBUG true
 
 #define BUTTON_PIN 15
 
-#define PILLS_PER_DAY 1
+#define PILLS_PER_DAY 1.25
 #define MINUTES_IN_A_DAY 1440
 #define MINIMUM_UNLOCK_TIME MINUTES_IN_A_DAY

@@ -16,6 +16,7 @@ export default defineConfig({
       '/lock': 'http://pillboxtest',
       '/unlock': 'http://pillboxtest',
       '/scheduleUnlock': 'http://pillboxtest',
+      '/doDispense': 'http://pillboxtest',
     }
   },
   resolve: {

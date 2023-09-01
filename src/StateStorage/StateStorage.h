@@ -14,15 +14,18 @@ class StateStorage
     StateStorage(FS* fs);
     void init();
     bool getIsLocked();
-    int getDayDispensed();
+    int getLastDayHandled();
     unsigned long getUnlockTime();
+    unsigned int getPillsAvailable();
     void setIsLocked(bool isLocked);
-    void setDayDispensed(int dayDispensed);
+    void setLastDayHandled(int lastDayHandled);
     void setUnlockTime(unsigned long unlockTime);
+    void setPillsAvailable(unsigned int pillsAvailable);
   private:
     bool _isLocked;
-    int _dayDispensed;
+    int _lastDayHandled;
     unsigned long _unlockTime;
+    unsigned int _pillsAvailable;
     void _getStoredState();
     void _saveStoredState();
     FS* _fs;

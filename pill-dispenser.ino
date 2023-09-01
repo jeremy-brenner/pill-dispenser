@@ -48,12 +48,10 @@ void setup() {
   state.init();
   lock.init();
   
-  scheduler.onDispense(doDispense);
+  scheduler.onNextDay(doNextDay);
   scheduler.onUnlock( []() {
     lock.unlock();
   } );
-
-  //  button.onPress(buttonPress);
 
   if (DEBUG) {
     server.on("/unlock", []() {
@@ -68,8 +66,8 @@ void setup() {
       dispensePill();
       sendOk();
     });
-    server.on("/doDispense", []() {
-      doDispense();
+    server.on("/doNextDay", []() {
+      doNextDay();
       sendOk();
     });
     server.on("/clearSchedule", []() {
@@ -77,6 +75,11 @@ void setup() {
       sendOk();
     });
   }
+
+  server.on("/doDispense", []() {
+    doDispense();
+    sendOk();
+  });
 
   server.on(UriBraces("/scheduleUnlock/{}"), scheduleUnlock);
   server.on("/lock", []() {
@@ -134,13 +137,6 @@ void loop() {
   delay(100);
 }
 
-void buttonPress() {
-  if (!lock.isLocked()) {
-    lock.lock();
-    scheduler.scheduleUnlock(30 * MINUTES_IN_A_DAY);
-  }
-}
-
 void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
   if (minutes >= MINIMUM_UNLOCK_TIME) {
@@ -151,12 +147,19 @@ void scheduleUnlock() {
   }
 }
 
-void doDispense() {
-  Serial.println("Dispensing");
+void doNextDay() {
+  Serial.println("Next day");
   Serial.println();
-  for (int i = 0; i < PILLS_PER_DAY; i++) {
-    dispensePill();
-    delay(500);
+  unsigned int currentlyAvailable = state.getPillsAvailable();
+  state.setPillsAvailable(currentlyAvailable + PILLS_PER_DAY*100);
+}
+
+void doDispense() {
+  unsigned int currentlyAvailable = state.getPillsAvailable();
+  if(currentlyAvailable >= 100){
+    Serial.println("Dispensing");
+    state.setPillsAvailable(currentlyAvailable - 100);
+    carousel.next();
   }
 }
 
@@ -208,6 +211,7 @@ String systemStatus() {
   doc["unlockTime"] = String(scheduler.getUnlockTime());
   doc["currentTime"] = String(scheduler.getCurrentTime());
   doc["readyTime"] = String(scheduler.getReadyTime());
+  doc["pillsAvailable"] = String(float(state.getPillsAvailable())/float(100));
   doc["minimumUnlockTime"] = String(MINIMUM_UNLOCK_TIME);
   doc["debug"] = String(DEBUG);
   String status;
