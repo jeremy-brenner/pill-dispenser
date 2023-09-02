@@ -6,6 +6,7 @@ import moment from 'moment'
 const ready = ref(false);
 const scheduling = ref(false);
 const isLocked = ref();
+const canUnlock = ref();
 const unlockTime = ref();
 const currentTime = ref();
 const readyTime = ref();
@@ -18,6 +19,7 @@ setInterval(() => fetch('/status')
   .then(response => response.json())
   .then(data => {
     isLocked.value = data.isLocked === "1";
+    canUnlock.value = data.canUnlock === "1";
     unlockTime.value = data.unlockTime*1000;
     currentTime.value = data.currentTime*1000;
     readyTime.value = data.readyTime*1000;
@@ -32,8 +34,12 @@ function dateFormat(time) {
   return moment(time).format('MMMM Do YYYY, h:mm:ss a')
 }
 
-function scheduleUnlock() {
-  scheduling.value = true;
+function lockClick() {
+  if(isLocked.value && canUnlock.value) {
+    fetch('/unlock');
+  } else {
+    scheduling.value = true;
+  }
 }
 
 function stopSchedulingUnlock() {
@@ -45,8 +51,8 @@ function stopSchedulingUnlock() {
 <template>
   <main>
     <div id="icons">
-      <span @click="scheduleUnlock">
-        <PadLock :is-locked="isLocked" :debug="debug"/>
+      <span @click="lockClick">
+        <PadLock :is-locked="isLocked" :can-unlock="canUnlock" :debug="debug"/>
       </span>
       <span>
         <Pill :pills-available="pillsAvailable"/>

@@ -17,6 +17,10 @@ bool StateStorage::getIsLocked() {
   return _isLocked;
 }
 
+bool StateStorage::getCanUnlock() {
+  return _canUnlock;
+}
+
 int StateStorage::getLastDayHandled() {
   return _lastDayHandled;
 }
@@ -32,6 +36,13 @@ unsigned int StateStorage::getPillsAvailable() {
 void StateStorage::setIsLocked(bool isLocked) {
   if(isLocked != _isLocked) {
     _isLocked = isLocked;
+    _saveStoredState();
+  }
+}
+
+void StateStorage::setCanUnlock(bool canUnlock) {
+  if(canUnlock != _canUnlock) {
+    _canUnlock = canUnlock;
     _saveStoredState();
   }
 }
@@ -70,6 +81,7 @@ void StateStorage::_getStoredState() {
       Serial.println(error.f_str());
     }
     _isLocked = stateJson["isLocked"] == "1";
+    _canUnlock = stateJson["canUnlock"] == "1";
     _lastDayHandled = stateJson["lastDayHandled"];
     _unlockTime = stateJson["unlockTime"];
     _pillsAvailable = stateJson["pillsAvailable"];
@@ -78,6 +90,7 @@ void StateStorage::_getStoredState() {
   }else{
     Serial.println("no state file, setting defaults");
     _isLocked = false;
+    _canUnlock = false;
     _lastDayHandled = -1;
     _unlockTime = 0;
     _pillsAvailable = 0;
@@ -89,6 +102,7 @@ void StateStorage::_saveStoredState() {
   Serial.println("saving state");
   StaticJsonDocument<200> stateJson;
   stateJson["isLocked"] = String(_isLocked);
+  stateJson["canUnlock"] = String(_canUnlock);
   stateJson["lastDayHandled"] = String(_lastDayHandled);
   stateJson["unlockTime"] = String(_unlockTime);
   stateJson["pillsAvailable"] = String(_pillsAvailable);

@@ -9,8 +9,17 @@ const emit = defineEmits(['closeMe'])
 const unlockDays = ref();
 const input = ref(null);
 
-
 function submit(e) {
+  fetch(`/scheduleUnlock/${getUnlockMinutes()}`)
+    .then(() => fetch('/lock'));
+  e.target.blur();  
+}
+
+function getUnlockMinutes() {
+  if(!unlockDays.value) {
+    return 0;
+  }
+
   const fullDaysMinutes = (unlockDays.value-1)*24*60;
 
   const mmt = moment(props.currentTime);
@@ -19,11 +28,7 @@ function submit(e) {
 
   const totalMinutes = fullDaysMinutes+partialDaysMinutes;
   const unlockMinutes = (totalMinutes > props.minimumUnlockTime) ? totalMinutes : props.minimumUnlockTime;
-
-  fetch(`/scheduleUnlock/${unlockMinutes}`)
-    .then(() => fetch('/lock'));
-  e.target.blur();
-  
+  return unlockMinutes;
 }
 
 function closeMe() {

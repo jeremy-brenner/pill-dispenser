@@ -50,16 +50,16 @@ void setup() {
   
   scheduler.onNextDay(doNextDay);
   scheduler.onUnlock( []() {
-    lock.unlock();
+    state.setCanUnlock(true);
   } );
 
   if (DEBUG) {
-    server.on("/unlock", []() {
-      lock.unlock();
-      sendOk();
-    });
     server.on("/toggleLock", []() {
       lock.toggleLock();
+      sendOk();
+    });
+    server.on("/canUnlock", []() {
+      state.setCanUnlock(true);
       sendOk();
     });
     server.on("/dispensePill", []() {
@@ -82,10 +82,19 @@ void setup() {
   });
 
   server.on(UriBraces("/scheduleUnlock/{}"), scheduleUnlock);
+  
   server.on("/lock", []() {
     lock.lock();
     sendOk();
   });
+
+  server.on("/unlock", []() {
+    if(state.getCanUnlock()){
+      lock.unlock();
+    }
+    sendOk();
+  });
+  
   server.on("/status", sendStatus);
 
   server.on(UriRegex("/.*"), HTTP_GET, handleGet);
@@ -141,6 +150,7 @@ void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
   if (minutes >= MINIMUM_UNLOCK_TIME) {
     scheduler.scheduleUnlock(minutes);
+    state.setCanUnlock(false);
     sendOk();
   } else {
     sendBadRequest();
@@ -207,7 +217,8 @@ void sendOk() {
 
 String systemStatus() {
   StaticJsonDocument<200> doc;
-  doc["isLocked"] = String(lock.isLocked());
+  doc["isLocked"] = String(state.getIsLocked());
+  doc["canUnlock"] = String(state.getCanUnlock());
   doc["unlockTime"] = String(scheduler.getUnlockTime());
   doc["currentTime"] = String(scheduler.getCurrentTime());
   doc["readyTime"] = String(scheduler.getReadyTime());

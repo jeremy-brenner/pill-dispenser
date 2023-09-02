@@ -2,9 +2,9 @@
 
 import { computed, ref } from 'vue'
 
-const props = defineProps(['isLocked'])
+const props = defineProps(['isLocked', 'canUnlock']);
 
-const wrapper = ref(null)
+const wrapper = ref(null);
 
 const wrapperWidth = computed(() => `${wrapper?.value?.clientWidth}px`);
 
@@ -12,7 +12,7 @@ const wrapperWidth = computed(() => `${wrapper?.value?.clientWidth}px`);
 
 <template>
   <div class="wrapper" ref="wrapper">
-  <div class="padlock" :class="{ isLocked }">
+  <div class="padlock" :class="{ isLocked, canUnlock }">
     <div class="top"></div>
     <div class="middle"></div>
     <div class="bottom">
@@ -65,6 +65,29 @@ const wrapperWidth = computed(() => `${wrapper?.value?.clientWidth}px`);
   animation-name: lock;
   margin-bottom: -13%;
 } 
+
+.padlock.isLocked.canUnlock > .top {
+  animation-name: wiggle;
+  animation-duration: 1s;
+  animation-iteration-count: infinite;
+}
+
+
+@keyframes wiggle {
+  0% {
+    margin-bottom: -15%;
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(2deg);
+  }
+  50% {
+    margin-bottom: -13%;
+  } 
+  100% {
+    margin-bottom: -15%;
+  } 
+}
 
 @keyframes unlock {
   from {margin-bottom: -13%;}
