@@ -90,7 +90,7 @@ void StateStorage::_getStoredState() {
   }else{
     Serial.println("no state file, setting defaults");
     _isLocked = false;
-    _canUnlock = false;
+    _canUnlock = true;
     _lastDayHandled = -1;
     _unlockTime = 0;
     _pillsAvailable = 0;
@@ -112,4 +112,11 @@ void StateStorage::_saveStoredState() {
   file.print(state);
   file.close();
   Serial.println(state);
+}
+
+void StateStorage::reset() {
+  if (_fs->exists(STATEFILE)) {
+    _fs->remove(STATEFILE);
+  }
+  _getStoredState();
 }

@@ -46,6 +46,18 @@ function stopSchedulingUnlock() {
   scheduling.value = false;
 }
 
+function callCanUnlock() {
+  fetch('/canUnlock');
+}
+
+function callDoNextDay() {
+  fetch('/doNextDay');
+}
+
+function callResetState() {
+  fetch('/resetState');
+}
+
 </script>
 
 <template>
@@ -66,12 +78,7 @@ function stopSchedulingUnlock() {
       class="item"
     />
     <div class="item">
-      <span>
-        {{ hostname }}
-      </span>
-      <span v-if="debug">
-        -- DEBUG MODE
-      </span>
+      {{ hostname }}
     </div>
     <div class="item">
       System Time: {{ dateFormat(currentTime) }}
@@ -82,6 +89,18 @@ function stopSchedulingUnlock() {
     <div class="item" v-if="unlockTime > currentTime">
       Unlocks {{ moment(unlockTime).from(currentTime) }}
     </div>  
+    <div class="item debug" v-if="debug">
+      DEBUG:
+      <span v-if="debug" @click="callDoNextDay">
+        doNextDay
+      </span>  
+      <span v-if="debug" @click="callCanUnlock">
+        canUnlock
+      </span>  
+      <span v-if="debug" @click="callResetState">
+        resetState
+      </span>  
+    </div>
     <div id="spinner" v-if="!ready">
       Loading...
     </div>
@@ -118,6 +137,14 @@ function stopSchedulingUnlock() {
 
   #icons > span {
     position: relative;
+  }
+
+  .debug > span {
+    display: inline-block;
+    border-radius: 0.5rem;
+    margin-left: 0.125rem;
+    background-color: #4d1e1e;
+    padding: 0.25rem;
   }
 
   main > .item {

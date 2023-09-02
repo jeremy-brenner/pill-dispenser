@@ -13,6 +13,7 @@ class StateStorage
   public:
     StateStorage(FS* fs);
     void init();
+    void reset();
     bool getIsLocked();
     bool getCanUnlock();
     int getLastDayHandled();

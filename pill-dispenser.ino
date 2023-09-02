@@ -70,6 +70,10 @@ void setup() {
       doNextDay();
       sendOk();
     });
+    server.on("/resetState", []() {
+      resetState();
+      sendOk();
+    });
     server.on("/clearSchedule", []() {
       scheduler.scheduleUnlock(0);
       sendOk();
@@ -114,6 +118,9 @@ void handleGet() {
   handleFileRead(server.uri());
 }
 
+void resetState() {
+  state.reset();
+}
 
 void handleFileRead(String path) {
   Serial.println("Trying to serve");
