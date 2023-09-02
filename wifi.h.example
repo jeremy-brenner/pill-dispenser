@@ -1,3 +1,8 @@
 #define WIFI_HOSTNAME "pillbox"
 #define WIFI_SSID "my ssid"
 #define WIFI_PASSWORD "my password"
+
+#define AP_SSID "pbap"
+#define AP_PASS "my ap ssid"
+#define AP_CHANNEL 1
+#define AP_HIDDEN true
