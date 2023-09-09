@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue'
-const props = defineProps(['pillsAvailable'])
+const props = defineProps(['pillsAvailable', 'pillsLeft']);
 
 const wrapper = ref(null)
 const wrapperWidth = computed(() => `${wrapper?.value?.clientWidth}px`);
@@ -8,13 +8,22 @@ const wrapperWidth = computed(() => `${wrapper?.value?.clientWidth}px`);
 const spin = ref(false);
 const shake = computed(() => props.pillsAvailable >= 1 && !spin.value);
 
+const pillsLeftElement = ref(null)
 
 function click() {
   if(props.pillsAvailable >= 1) {
     spin.value = true;
-    fetch(`/doDispense`);
+    fetch('/api/doDispense');
     setTimeout(() => spin.value = false, 1000);
   }
+}
+
+function updateLeft(e) {
+  e.target.blur();
+  e.stopPropagation();
+  e.preventDefault();
+  const val = pillsLeftElement.value.innerText.trim();
+  fetch(`/api/setPillsLeft/${val}`);
 }
 
 </script>
@@ -32,6 +41,9 @@ function click() {
     <div class="available"> 
       {{  props.pillsAvailable }}
     </div>
+    <div class="left" ref="pillsLeftElement" contentEditable="true" inputmode=decimal @keydown.enter="updateLeft"> 
+      {{  props.pillsLeft }}
+    </div>
   </div>
 </template>
 
@@ -44,15 +56,23 @@ function click() {
   position: relative;
 }
 
-.available {
+.available, .left {
   position: absolute;
-  bottom: 7%;
-  left: 4%;
   font-size: 1.5em;
   margin: 0.25rem 0.5rem;
   border-radius: 0.75rem;
   background-color: #545463;
   padding: 0.5rem;
+}
+
+.available {
+  bottom: 8%;
+  left: 4%;
+}
+
+.left {
+  top: 8%;
+  right: 4%;
 }
 
 .pill {

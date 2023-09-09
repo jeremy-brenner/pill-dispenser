@@ -1,8 +1,18 @@
 <script setup>
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import moment from 'moment'
 
+const debugEndpoints = ref([
+  'doNextDay',
+  'canUnlock',
+  'resetState',
+  'clearDebug',
+  'clearSchedule',
+  'dispensePill',
+  'toggleLock',
+  'reset',
+]);
 const ready = ref(false);
 const scheduling = ref(false);
 const isLocked = ref();
@@ -11,24 +21,46 @@ const unlockTime = ref();
 const currentTime = ref();
 const readyTime = ref();
 const pillsAvailable = ref(0);
+const pillsLeft = ref(0);
 const minimumUnlockTime = ref();
 const debug = ref();
 const hostname = ref(location.hostname);
+let loadTime = Date.now()
 
-setInterval(() => fetch('/status')
+
+function fetchLoop() {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 2000);
+
+  fetch('/api/status', { signal: controller.signal })
   .then(response => response.json())
-  .then(data => {
-    isLocked.value = data.isLocked === "1";
-    canUnlock.value = data.canUnlock === "1";
-    unlockTime.value = data.unlockTime*1000;
-    currentTime.value = data.currentTime*1000;
-    readyTime.value = data.readyTime*1000;
-    pillsAvailable.value = parseFloat(data.pillsAvailable);
-    minimumUnlockTime.value = parseInt(data.minimumUnlockTime);
-    debug.value = data.debug === "1"; 
-    ready.value = true;
+  .then(setData)
+  .catch(() => {})
+  .then(() => {
+    clearTimeout(id);
+    setTimeout(() => fetchLoop(), 1000);
   })
-  ,1000);
+}
+
+
+setInterval(() =>{
+  ready.value = Date.now() - loadTime < 2000
+},1000);
+
+fetchLoop();
+
+function setData(data) {
+  loadTime = Date.now();
+  isLocked.value = data.isLocked === "1";
+  canUnlock.value = data.canUnlock === "1";
+  unlockTime.value = data.unlockTime*1000;
+  currentTime.value = data.currentTime*1000;
+  readyTime.value = data.readyTime*1000;
+  pillsAvailable.value = parseFloat(data.pillsAvailable);
+  pillsLeft.value = parseInt(data.pillsLeft);
+  minimumUnlockTime.value = parseInt(data.minimumUnlockTime);
+  debug.value = data.debug === "1"; 
+}
 
 function dateFormat(time) {
   return moment(time).format('MMMM Do YYYY, h:mm:ss a')
@@ -36,7 +68,7 @@ function dateFormat(time) {
 
 function lockClick() {
   if(isLocked.value && canUnlock.value) {
-    fetch('/unlock');
+    fetch('/api/unlock');
   } else {
     scheduling.value = true;
   }
@@ -46,17 +78,10 @@ function stopSchedulingUnlock() {
   scheduling.value = false;
 }
 
-function callCanUnlock() {
-  fetch('/canUnlock');
+function callFetch(path) {
+  fetch(`/api/${path}`);
 }
 
-function callDoNextDay() {
-  fetch('/doNextDay');
-}
-
-function callResetState() {
-  fetch('/resetState');
-}
 
 </script>
 
@@ -67,7 +92,7 @@ function callResetState() {
         <PadLock :is-locked="isLocked" :can-unlock="canUnlock" :debug="debug"/>
       </span>
       <span>
-        <Pill :pills-available="pillsAvailable"/>
+        <Pill :pills-available="pillsAvailable" :pills-left="pillsLeft"/>
       </span>
     </div>
     <UnlockScheduler 
@@ -91,14 +116,8 @@ function callResetState() {
     </div>  
     <div class="item debug" v-if="debug">
       DEBUG:
-      <span v-if="debug" @click="callDoNextDay">
-        doNextDay
-      </span>  
-      <span v-if="debug" @click="callCanUnlock">
-        canUnlock
-      </span>  
-      <span v-if="debug" @click="callResetState">
-        resetState
+      <span v-for="endpoint in debugEndpoints" @click="callFetch(endpoint)">
+        {{  endpoint }}
       </span>  
     </div>
     <div id="spinner" v-if="!ready">
@@ -118,6 +137,10 @@ function callResetState() {
     background-color: #222233;
     color: white;
     user-select: none;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
   }
 
   main > #spinner {
@@ -128,6 +151,9 @@ function callResetState() {
     font-size: 2em;
     line-height: 100vh;
     text-align: center;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   #icons {
@@ -142,7 +168,7 @@ function callResetState() {
   .debug > span {
     display: inline-block;
     border-radius: 0.5rem;
-    margin-left: 0.125rem;
+    margin: 0.1rem;
     background-color: #4d1e1e;
     padding: 0.25rem;
   }

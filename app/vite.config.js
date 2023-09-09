@@ -12,14 +12,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/status': 'http://pillboxtest',
-      '/lock': 'http://pillboxtest',
-      '/unlock': 'http://pillboxtest',
-      '/scheduleUnlock': 'http://pillboxtest',
-      '/doDispense': 'http://pillboxtest',
-      '/canUnlock': 'http://pillboxtest',
-      '/doNextDay': 'http://pillboxtest',
-      '/resetState': 'http://pillboxtest',
+      '^/api': 'http://pillbox',
     }
   },
   resolve: {

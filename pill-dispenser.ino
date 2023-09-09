@@ -1,10 +1,12 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <DNSServer.h>
 #include <ArduinoJson.h>
 #include <uri/UriBraces.h>
 #include <TimeLib.h>
 #include <LittleFS.h>
 #include <uri/UriRegex.h>
+#include <Esp.h>
 
 #include "src/Lock/Lock.h"
 #include "src/Carousel/Carousel.h"
@@ -24,9 +26,12 @@ LittleFSConfig fileSystemConfig = LittleFSConfig();
 StateStorage state(fileSystem);
 Scheduler scheduler(&state);
 Lock lock(&state);
+const byte DNS_PORT = 53;
+DNSServer dnsServer;
+IPAddress localIP(192, 168, 2, 1);
+
 
 bool haveWifi;
-
 
 void setup() {
   Serial.begin(115200);
@@ -36,6 +41,9 @@ void setup() {
   timeSync.init();
   connectToWifi();
 
+  dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
+  dnsServer.start(DNS_PORT, "*", localIP);
+
   fileSystemConfig.setAutoFormat(false);
   fileSystem->setConfig(fileSystemConfig);
   fsOK = fileSystem->begin();
@@ -44,7 +52,6 @@ void setup() {
     stop();
   }
   
-
   state.init();
   lock.init();
   
@@ -53,53 +60,64 @@ void setup() {
     state.setCanUnlock(true);
   } );
 
-  if (DEBUG) {
-    server.on("/toggleLock", []() {
+  if (state.getIsDebug()) {
+    server.on("/api/toggleLock", []() {
       lock.toggleLock();
       sendOk();
     });
-    server.on("/canUnlock", []() {
+    server.on("/api/canUnlock", []() {
       state.setCanUnlock(true);
       sendOk();
     });
-    server.on("/dispensePill", []() {
+    server.on("/api/dispensePill", []() {
       dispensePill();
       sendOk();
     });
-    server.on("/doNextDay", []() {
+    server.on("/api/doNextDay", []() {
       doNextDay();
       sendOk();
     });
-    server.on("/resetState", []() {
+    server.on("/api/resetState", []() {
       resetState();
       sendOk();
     });
-    server.on("/clearSchedule", []() {
+    server.on("/api/clearSchedule", []() {
       scheduler.scheduleUnlock(0);
+      sendOk();
+    });
+    server.on("/api/clearDebug", []() {
+      state.setIsDebug(false);
+      reset();
+      sendOk();
+    });
+    server.on("/api/reset", []() {
+      reset();
       sendOk();
     });
   }
 
-  server.on("/doDispense", []() {
+  server.on("/api/doDispense", []() {
     doDispense();
     sendOk();
   });
 
-  server.on(UriBraces("/scheduleUnlock/{}"), scheduleUnlock);
-  
-  server.on("/lock", []() {
+  server.on(UriBraces("/api/scheduleUnlock/{}"), scheduleUnlock);
+
+  server.on(UriBraces("/api/setPillsLeft/{}"), setPillsLeft);
+
+  server.on("/api/lock", []() {
     lock.lock();
     sendOk();
   });
 
-  server.on("/unlock", []() {
+  server.on("/api/unlock", []() {
     if(state.getCanUnlock()){
       lock.unlock();
     }
     sendOk();
   });
   
-  server.on("/status", sendStatus);
+  server.on("/api/status", sendStatus);
 
   server.on(UriRegex("/.*"), HTTP_GET, handleGet);
   server.onNotFound(sendNotFound);
@@ -149,6 +167,7 @@ void loop() {
   checkWifi();
   timeSync.update();
   scheduler.update(timeSync.isTimeSet());
+  dnsServer.processNextRequest();
   server.handleClient();
   delay(100);
 }
@@ -164,6 +183,12 @@ void scheduleUnlock() {
   }
 }
 
+void setPillsLeft() {
+  unsigned int pillsLeft = server.pathArg(0).toInt();
+  state.setPillsLeft(pillsLeft);
+  sendOk();
+}
+
 void doNextDay() {
   Serial.println("Next day");
   Serial.println();
@@ -172,10 +197,13 @@ void doNextDay() {
 }
 
 void doDispense() {
+  unsigned int pillsLeft = state.getPillsLeft();
+
   unsigned int currentlyAvailable = state.getPillsAvailable();
   if(currentlyAvailable >= 100){
     Serial.println("Dispensing");
     state.setPillsAvailable(currentlyAvailable - 100);
+    state.setPillsLeft(pillsLeft > 0 ? pillsLeft - 1 : 0);
     carousel.next();
   }
 }
@@ -188,7 +216,6 @@ void connectToWifi() {
   Serial.print("Configuring access point...");
   WiFi.mode(WIFI_AP_STA);
   delay(1000);
-  IPAddress localIP(192, 168, 2, 1);
   IPAddress gateway(192, 168, 2, 0);
   IPAddress subnet(255, 255, 255, 0);
   WiFi.softAPConfig(localIP, gateway, subnet);
@@ -223,15 +250,16 @@ void sendOk() {
 }
 
 String systemStatus() {
-  StaticJsonDocument<200> doc;
+  StaticJsonDocument<500> doc;
   doc["isLocked"] = String(state.getIsLocked());
   doc["canUnlock"] = String(state.getCanUnlock());
   doc["unlockTime"] = String(scheduler.getUnlockTime());
   doc["currentTime"] = String(scheduler.getCurrentTime());
   doc["readyTime"] = String(scheduler.getReadyTime());
   doc["pillsAvailable"] = String(float(state.getPillsAvailable())/float(100));
+  doc["pillsLeft"] = String(state.getPillsLeft());
   doc["minimumUnlockTime"] = String(MINIMUM_UNLOCK_TIME);
-  doc["debug"] = String(DEBUG);
+  doc["debug"] = String(state.getIsDebug());
   String status;
   serializeJson(doc, status);
   return status;
@@ -240,3 +268,5 @@ String systemStatus() {
 void sendStatus() {
   server.send(200, "text/plain", systemStatus());
 }
+
+void reset() { ESP.reset(); }

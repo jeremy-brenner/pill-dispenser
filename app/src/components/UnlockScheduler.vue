@@ -10,8 +10,8 @@ const unlockDays = ref();
 const input = ref(null);
 
 function submit(e) {
-  fetch(`/scheduleUnlock/${getUnlockMinutes()}`)
-    .then(() => fetch('/lock'));
+  fetch(`/api/scheduleUnlock/${getUnlockMinutes()}`)
+    .then(() => fetch('/api/lock'));
   e.target.blur();  
 }
 
