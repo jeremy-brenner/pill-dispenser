@@ -23,6 +23,7 @@ const readyTime = ref();
 const pillsAvailable = ref(0);
 const pillsLeft = ref(0);
 const minimumUnlockTime = ref();
+const currentUnlockDays = ref();
 const debug = ref();
 const hostname = ref(location.hostname);
 let loadTime = Date.now()
@@ -59,6 +60,7 @@ function setData(data) {
   pillsAvailable.value = parseFloat(data.pillsAvailable);
   pillsLeft.value = parseInt(data.pillsLeft);
   minimumUnlockTime.value = parseInt(data.minimumUnlockTime);
+  currentUnlockDays.value = unlockTime.value ? moment(unlockTime.value).diff(moment(currentTime.value), 'days') + 1 : null;
   debug.value = data.debug === "1"; 
 }
 
@@ -82,7 +84,6 @@ function callFetch(path) {
   fetch(`/api/${path}`);
 }
 
-
 </script>
 
 <template>
@@ -98,9 +99,10 @@ function callFetch(path) {
     <UnlockScheduler 
       v-if="scheduling" 
       :current-time="currentTime" 
+      :current-unlock-days="currentUnlockDays" 
       :minimum-unlock-time="minimumUnlockTime"
       @close-me="stopSchedulingUnlock"
-      class="item"
+      class="full"
     />
     <div class="item">
       {{ hostname }}
@@ -120,7 +122,7 @@ function callFetch(path) {
         {{  endpoint }}
       </span>  
     </div>
-    <div id="spinner" v-if="!ready">
+    <div id="spinner" class="full" v-if="!ready">
       Loading...
     </div>
   </main>
@@ -137,23 +139,27 @@ function callFetch(path) {
     background-color: #222233;
     color: white;
     user-select: none;
-    max-width: 500px;
+    max-width: 400px;
     margin-left: auto;
     margin-right: auto;
     position: relative;
+    overflow: hidden;
   }
 
-  main > #spinner {
+  main > .full {
     position: absolute;
     width: 100vw;
     height: 100vh;
     background-color: rgba(0,0,0,0.75);
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  #spinner {
     font-size: 2em;
     line-height: 100vh;
     text-align: center;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
   }
 
   #icons {

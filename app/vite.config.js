@@ -12,7 +12,7 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '^/api': 'http://pillbox',
+      '^/api': 'http://pillboxtest',
     }
   },
   resolve: {
