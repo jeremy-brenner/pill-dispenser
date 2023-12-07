@@ -9,7 +9,6 @@
 
 Scheduler::Scheduler(StateStorage* state) :
   _state(state),
-  _unlockLambda([](){}),
   _nextDayLambda([](){}),
   _readyTime(0)
 {} 
@@ -33,15 +32,11 @@ void Scheduler::update(bool isTimeSet) {
     _nextDayLambda();
     _state->setLastDayHandled(_currentDay());
   }
-  if(_shouldUnlock()) {
-    _unlockLambda();
-    _state->setUnlockTime(0);
-  }
 }
 
 void Scheduler::scheduleUnlock(int minutes) {
   unsigned long scheduleTime = now() + minutes * 60L;
-  _state->setUnlockTime(minutes == 0 ? 0 : scheduleTime);
+  _state->setUnlockTime(scheduleTime);
 }
 
 unsigned long Scheduler::getUnlockTime() {
@@ -60,10 +55,6 @@ void Scheduler::onNextDay( Lambda handler ) {
   _nextDayLambda = handler;
 }
 
-void Scheduler::onUnlock( Lambda handler ) {
-  _unlockLambda = handler;
-}
-
 bool Scheduler::_isFirstRun() {
   return _state->getLastDayHandled() == -1;
 }
@@ -72,8 +63,8 @@ bool Scheduler::_isNextDay() {
   return _currentDay() != _state->getLastDayHandled() && _currentTime() >= DISPENSE_TIME;
 }
 
-bool Scheduler::_shouldUnlock() {
-  return _state->getUnlockTime() != 0 && _state->getUnlockTime() < now();
+bool Scheduler::getCanUnlock() {
+  return _state->getUnlockTime() < now();
 }
 
 unsigned long Scheduler::_offsetNow() {

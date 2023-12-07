@@ -16,14 +16,12 @@ class StateStorage
     void reset();
     bool getIsLocked();
     bool getIsDebug();
-    bool getCanUnlock();
     int getLastDayHandled();
     unsigned long getUnlockTime();
     unsigned int getPillsAvailable();    
     unsigned int getPillsLeft();
     void setIsLocked(bool isLocked);
     void setIsDebug(bool isDebug);
-    void setCanUnlock(bool canUnlock);
     void setLastDayHandled(int lastDayHandled);
     void setUnlockTime(unsigned long unlockTime);
     void setPillsAvailable(unsigned int pillsAvailable);
@@ -31,7 +29,6 @@ class StateStorage
   private:
     bool _isLocked;
     bool _isDebug;
-    bool _canUnlock;
     int _lastDayHandled;
     unsigned long _unlockTime;
     unsigned int _pillsAvailable;

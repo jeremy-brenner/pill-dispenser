@@ -17,12 +17,14 @@ class TimeSync
     bool isTimeSet();
     void update();
     void init();
+    bool haveRTC();
+    bool haveNTP();
   private:
-    WiFiUDP _ntpUDP;
-    NTPClient _timeClient;
     bool _haveRTC;
-    unsigned long _lastSynced;
-    unsigned long _timestamp(unsigned long time);
+    bool _haveNTP;
+    unsigned long _RTCLastSynced;
+    bool _isTimeToSyncToRTC();
+    void _syncToRTC();
 };
 
 #endif

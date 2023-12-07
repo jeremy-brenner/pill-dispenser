@@ -33,13 +33,15 @@ IPAddress localIP(192, 168, 2, 1);
 
 bool haveWifi;
 
+
 void setup() {
   Serial.begin(115200);
   delay(500);
   Serial.println();
 
-  timeSync.init();
   connectToWifi();
+
+  timeSync.init();
 
   dnsServer.setErrorReplyCode(DNSReplyCode::NoError);
   dnsServer.start(DNS_PORT, "*", localIP);
@@ -56,45 +58,71 @@ void setup() {
   lock.init();
   
   scheduler.onNextDay(doNextDay);
-  scheduler.onUnlock( []() {
-    state.setCanUnlock(true);
-  } );
 
-  if (state.getIsDebug()) {
-    server.on("/api/toggleLock", []() {
+  server.on("/api/toggleLock", []() {
+    if(state.getIsDebug()) {
       lock.toggleLock();
       sendOk();
-    });
-    server.on("/api/canUnlock", []() {
-      state.setCanUnlock(true);
-      sendOk();
-    });
-    server.on("/api/dispensePill", []() {
+    }else{
+      sendNotFound();
+    }
+  });
+  server.on("/api/dispensePill", []() {
+    if(state.getIsDebug()) {
       dispensePill();
       sendOk();
-    });
-    server.on("/api/doNextDay", []() {
+    }else{
+      sendNotFound();
+    }
+  });
+  server.on("/api/doNextDay", []() {
+    if(state.getIsDebug()) {
       doNextDay();
       sendOk();
-    });
-    server.on("/api/resetState", []() {
+    }else{
+      sendNotFound();
+    }
+  });
+  server.on("/api/resetState", []() {
+    if(state.getIsDebug()) {
       resetState();
       sendOk();
-    });
-    server.on("/api/clearSchedule", []() {
+    }else{
+      sendNotFound();
+    }
+  });
+  server.on("/api/clearSchedule", []() {
+    if(state.getIsDebug()) {
       scheduler.scheduleUnlock(0);
       sendOk();
-    });
-    server.on("/api/clearDebug", []() {
-      state.setIsDebug(false);
+    }else{
+      sendNotFound();
+    }
+  });
+  server.on("/api/reset", []() {
+    if(state.getIsDebug()) {
       reset();
       sendOk();
-    });
-    server.on("/api/reset", []() {
-      reset();
+    }else{
+      sendNotFound();
+    }
+  });
+
+  
+  server.on("/api/setDebug", []() {
+    if(scheduler.getCanUnlock()) {
+      state.setIsDebug(true);
       sendOk();
-    });
-  }
+    }else{
+      sendNotFound();
+    }
+  });
+
+  server.on("/api/clearDebug", []() {
+    state.setIsDebug(false);
+    sendOk();
+  });
+ 
 
   server.on("/api/doDispense", []() {
     doDispense();
@@ -111,7 +139,7 @@ void setup() {
   });
 
   server.on("/api/unlock", []() {
-    if(state.getCanUnlock()){
+    if(scheduler.getCanUnlock()){
       lock.unlock();
     }
     sendOk();
@@ -172,11 +200,19 @@ void loop() {
   delay(100);
 }
 
+void debugMethod(Lambda action) {
+  if(state.getIsDebug()) {
+    action();
+    sendOk();
+  }else{
+    sendNotFound();
+  }
+}
+
 void scheduleUnlock() {
   int minutes = server.pathArg(0).toInt();
   if (minutes >= MINIMUM_UNLOCK_TIME) {
     scheduler.scheduleUnlock(minutes);
-    state.setCanUnlock(false);
     sendOk();
   } else {
     sendBadRequest();
@@ -193,7 +229,8 @@ void doNextDay() {
   Serial.println("Next day");
   Serial.println();
   unsigned int currentlyAvailable = state.getPillsAvailable();
-  state.setPillsAvailable(currentlyAvailable + PILLS_PER_DAY*100);
+  unsigned int pillsAvailable = currentlyAvailable + PILLS_PER_DAY*100;
+  state.setPillsAvailable(pillsAvailable > MAX_PILLS_PER_DAY*100 ? MAX_PILLS_PER_DAY*100 : pillsAvailable);
 }
 
 void doDispense() {
@@ -213,7 +250,7 @@ void dispensePill() {
 }
 
 void connectToWifi() {
-  Serial.print("Configuring access point...");
+  Serial.println("Configuring access point...");
   WiFi.mode(WIFI_AP_STA);
   delay(1000);
   IPAddress gateway(192, 168, 2, 0);
@@ -252,13 +289,15 @@ void sendOk() {
 String systemStatus() {
   StaticJsonDocument<500> doc;
   doc["isLocked"] = String(state.getIsLocked());
-  doc["canUnlock"] = String(state.getCanUnlock());
+  doc["canUnlock"] = String(scheduler.getCanUnlock());
   doc["unlockTime"] = String(scheduler.getUnlockTime());
   doc["currentTime"] = String(scheduler.getCurrentTime());
   doc["readyTime"] = String(scheduler.getReadyTime());
   doc["pillsAvailable"] = String(float(state.getPillsAvailable())/float(100));
   doc["pillsLeft"] = String(state.getPillsLeft());
   doc["minimumUnlockTime"] = String(MINIMUM_UNLOCK_TIME);
+  doc["haveRTC"] = String(timeSync.haveRTC() ? "true" : "false");
+  doc["haveNTP"] = String(timeSync.haveNTP() ? "true" : "false");
   doc["debug"] = String(state.getIsDebug());
   String status;
   serializeJson(doc, status);

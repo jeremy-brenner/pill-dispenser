@@ -18,8 +18,8 @@ class Scheduler
     bool isReady();
     void update(bool isTimeSet);
     void scheduleUnlock(int minutes);
-    void onUnlock( Lambda fn );
     void onNextDay( Lambda fn );
+    bool getCanUnlock();
     unsigned long getUnlockTime();
     unsigned long getCurrentTime();
     unsigned long getReadyTime();
@@ -27,12 +27,10 @@ class Scheduler
     unsigned long _readyTime;
     bool _isNextDay();
     bool _isFirstRun();
-    bool _shouldUnlock();
     unsigned long _offsetNow();
     int _currentDay();
     int _currentTime();
-    StateStorage* _state;
-    Lambda _unlockLambda;
+    StateStorage* _state;;
     Lambda _nextDayLambda;
 };
 
