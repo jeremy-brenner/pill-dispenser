@@ -53,8 +53,8 @@ module powl(r,teeth,t,hole=true) {
       }
     }
     if(hole) {
-      translate([22-2.5,2.5,-0.1]) cylinder(r=1.6,h=t+02);
-      translate([22-2.5,2.5,t/2])  cylinder(r=3.6,h=t/2+0.1);
+      translate([22-2.5,2.5,-0.1]) cylinder(r=1.6,h=t+0.2);
+      translate([22-2.5,2.5,t/2])  cylinder(r=5,h=t/2+0.1);
     }
   }
 

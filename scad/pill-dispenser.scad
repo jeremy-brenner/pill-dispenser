@@ -20,12 +20,13 @@ renderCap=true;
 renderRotator=true;
 renderRotatorTray=true;
 renderRatchetTray=true;
+renderRatchetTrayLid=true;
 renderBottomTray=true;
 renderRotatorGear=true;
 renderRatchetArmWRack=true;
 renderRatchetArmWHole=true;
 renderLockPole=true;
-lockPoleLen=1; // [1:Single, 2:Double]
+lockPoleLen=1; 
 renderPinionServo=true;
 renderPinion=true;
 renderLock=true;
@@ -33,7 +34,9 @@ lockPosition=4; // [4:Unlocked, 8:Middle, 20:Locked]
 
 /* [Hidden] */
 
-pr=3.75;
+pr=4;
+// pr=3.75; //original
+
 ph=21;
 t=1.2;
 
@@ -54,12 +57,12 @@ holeIr=rotatorIr+rotatorT;
 rotatorTrayR=rotatorOr+3;
 rotatorTrayCenterHoleR=rotatorIr+0.3;
 
-ratchetTrayH=8.4;
+ratchetTrayH=10.4;
 
-bottomTrayH=22.75;
-servoWingT=2.8;
+bottomTrayH=26.75; //22.75
+servoWingT=3;
 
-lockPoleBaseLen=53;
+lockPoleBaseLen=46;
 
 $fn=64;
 
@@ -86,7 +89,7 @@ module singles() {
   trayR=max(rowDistances)+pr+4.5;
   
   if(renderCap) {
-    translate([0,0,trayH*2]) rotatorTrayCap(trayR,10+2,pillsPerRow,rotatorSinglesIr+0.3,angle);
+   rotate([0,0,-angle]) translate([0,0,trayH*2]) rotatorTrayCap(trayR,10+2,pillsPerRow,rotatorSinglesIr+0.3,angle);
   }
 
   if(renderRotator) {
@@ -98,12 +101,27 @@ module singles() {
   }
   // translate([0,0,trayH]) rotatorTraySingles(trayR,trayH,rotatorSinglesIr+0.3,pillsPerRow,pr,rowDistances,angle);
   
+  if(renderRatchetTrayLid) {
+    // intersection() {
+      translate([0,0,0]) ratchetTrayLid(t, trayR-2.3,rotatorSinglesIr+0.3,pr,rowDistances,angle,ratchetTrayH); 
+    //  mirror([0,0,1]) rotate([0,0,angle*-12]) mirror([0,1,0]) translate([27.5,-21.5,-1])  cylinder(r=5,h=100);
+    //  }
+
+  }
+
   if(renderRatchetTray) {
+    
     translate([0,0,-ratchetTrayH]) ratchetTray(trayR,ratchetTrayH,rotatorSinglesIr+0.3,pillsPerRow,pr,ph,rowDistances,angle,t,servoWingT);  
   }
   
   if(renderBottomTray) {
-    translate([0,0,-ratchetTrayH-bottomTrayH-2.2]) bottomTray(bottomTrayH,trayR,pr,ph,pillsPerRow,rowDistances,angle,servoWingT) ;
+    translate([0,0,-ratchetTrayH-bottomTrayH-2.2]) {
+    //  intersection() {
+       bottomTray(bottomTrayH,trayR,pr,ph,pillsPerRow,rowDistances,angle); 
+        // rotate([0,0,-angle]) translate([-trayR-10,-8.5,-3]) cube([20,17,17]);
+      // }
+    }
+    // powerHoleNutDriver();
   }
 
   if(renderRotatorGear) {
@@ -111,9 +129,9 @@ module singles() {
   }
 
 
-  rotate([0,0,-angle*12]) translate([0,0,-6]) {
+  rotate([0,0,-angle*12]) translate([0,0,-8]) {
     if(renderRatchetArmWHole) {
-      ratchetArmHole();
+      rotate([0,0,-90]) ratchetArmHole();
     }
     if(renderRatchetArmWRack) {
       translate([4.5,0,0])  ratchetArmRack();
@@ -121,10 +139,12 @@ module singles() {
   }
 
   if(renderLockPole) {
-    rotate([0,0,angle]) translate([0,0,-16]) lockPole(r=9.2,h=lockPoleBaseLen+trayH*lockPoleLen, topInterlock=true, bottomInterlock=false);
+    lockPoleH =lockPoleBaseLen+trayH*lockPoleLen;
+    //  lockPoleLen==1 ? lockPoleBaseLen+trayH : trayH;
+    translate([0,0,-16]) lockPole(r=9.2,h=lockPoleH, bottomInterlock=false);
   }
 
-  translate([-18.5,-8,-ratchetTrayH]) rotate([0,0,90]) rotate([0,90,0]) {
+  translate([-18.5,-8,-ratchetTrayH]) rotate([0,90,0]) rotate([0,90,0]) {
     if(renderPinionServo) {
       servo();
     }
@@ -136,10 +156,14 @@ module singles() {
   
   lockO=-trayR+lockPosition;
 
-  rotate([0,0,-angle]) translate([-7.5/2,lockO,-ratchetTrayH-bottomTrayH-2.2]) {
+  translate([-7.5/2,lockO,-ratchetTrayH-bottomTrayH-2.2]) {
     if(renderLock) lock();
   }
  
+//  color("gray") translate([25,-14,-28]) rotate([0,0,-angle-45]) cube([8,13,25]);
+  // translate([0,-37,-11]) rotate([0,0,-angle-45]) rotate([0,90,0]) cpu();
+
+  // rotate([0,0,180]) translate([0,-37,-11]) rotate([0,0,-angle-45]) rotate([0,90,0]) cpu();
 }
 
 module lockPoleBottomTest() {

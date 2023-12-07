@@ -1,4 +1,4 @@
-module rotatorTrayBase(r,h,sections,centerHoleR,skipOne=1,top=false) {
+module rotatorTrayBase(r,h,sections,centerHoleR,skipOne=1,top=false,bottom=false) {
   dAngle=360/sections;
   difference() {
     union() {
@@ -21,13 +21,16 @@ module rotatorTrayBase(r,h,sections,centerHoleR,skipOne=1,top=false) {
       }
     }
 
-   translate([0,0,2]) cylinder(r=r-2,h=h);
+    translate([0,0,2]) cylinder(r=r-2,h=h);
     translate([0,0,-1]) {
       cylinder(r=centerHoleR,h=4);
-      for ( i = [0 : sections-1] ){
-        if(i != 0 || skipOne == false) {
-          rotate([0, 0, i*dAngle])
-          translate([r+2,0,0]) cylinder(r=2.2,h=6);
+  
+      if(!bottom) {
+        for ( i = [0 : sections-1] ){
+          if(i != 0 || skipOne == false) {
+            rotate([0, 0, i*dAngle])
+            translate([r+2,0,0]) cylinder(r=2.2,h=6);
+          }
         }
       }
     }

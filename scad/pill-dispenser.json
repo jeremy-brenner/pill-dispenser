@@ -1,0 +1,39 @@
+{
+    "fileFormatVersion": "1",
+    "parameterSets": {
+        "New set 1": {
+            "lockPoleLen": "1",
+            "lockPosition": "4",
+            "renderBottomTray": "true",
+            "renderCap": "false",
+            "renderLock": "false",
+            "renderLockPole": "false",
+            "renderPinion": "false",
+            "renderPinionServo": "false",
+            "renderRatchetArmWHole": "false",
+            "renderRatchetArmWRack": "false",
+            "renderRatchetTray": "false",
+            "renderRatchetTrayLid": "false",
+            "renderRotator": "false",
+            "renderRotatorGear": "false",
+            "renderRotatorTray": "false"
+        },
+        "New set 2": {
+            "lockPoleLen": "1",
+            "lockPosition": "4",
+            "renderBottomTray": "false",
+            "renderCap": "true",
+            "renderLock": "false",
+            "renderLockPole": "false",
+            "renderPinion": "false",
+            "renderPinionServo": "false",
+            "renderRatchetArmWHole": "false",
+            "renderRatchetArmWRack": "false",
+            "renderRatchetTray": "false",
+            "renderRatchetTrayLid": "false",
+            "renderRotator": "false",
+            "renderRotatorGear": "false",
+            "renderRotatorTray": "false"
+        }
+    }
+}

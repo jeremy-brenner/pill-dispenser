@@ -6,7 +6,7 @@ teeth=12;
 
 
 rack_length = 13.8;
-rack_height=3.5;
+rack_height=4;
 bore=5.5;
 width=5;
 final_hub_thickness=0;
