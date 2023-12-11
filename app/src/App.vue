@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import moment from 'moment'
 
 const debugEndpoints = ref([
@@ -30,18 +30,6 @@ const elapsed = ref(0);
 const hostname = ref(location.hostname);
 let ws;
 
-startWebSocket();
-
-setInterval( () => {
-    const newElapsed = Date.now() - lastMessageTime.value;
-    if(lastMessageTime.value > 0 && elapsed.value < 5000 && newElapsed > 5000 && ws.readyState == 1) {
-      ws.close();
-    }
-    elapsed.value = newElapsed;
-  },
-  1000
-);
-
 const status = computed(() => {
   if(elapsed.value < 2000) {
     return 'ok';
@@ -52,6 +40,23 @@ const status = computed(() => {
   return 'bad';
 });
 
+startWebSocket();
+
+setInterval( 
+  () => {
+    if(lastMessageTime.value > 0) {
+      elapsed.value = Date.now() - lastMessageTime.value;
+    }
+  },
+  1000
+);
+
+watch(status, (newStatus) => {
+  if(newStatus == 'bad' && ws.readyState == 1) {
+    console.log("closing websocket");
+    ws.close();
+  }
+});
 
 function startWebSocket() {
   const wsPort = hostname.value == 'localhost' ? window.location.port : 81;
@@ -69,7 +74,6 @@ function startWebSocket() {
   }
   ws.onerror = (e) => console.log('ws error', e); 
 }
-
 
 function setData(data) {
   ready.value = true;
@@ -214,6 +218,8 @@ function callFetch(path) {
     border-radius: 100%;
     display: inline-block;
     border: 1px solid #434355;
+    vertical-align: bottom;
+    margin-left: 0.1rem;
   }
 
   .ok {
