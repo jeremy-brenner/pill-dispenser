@@ -132,6 +132,7 @@ void setup() {
   server.on(UriBraces("/api/scheduleUnlock/{}"), scheduleUnlock);
 
   server.on(UriBraces("/api/setPillsLeft/{}"), setPillsLeft);
+  server.on(UriBraces("/api/setPillsAvailable/{}"), setPillsAvailable);
 
   server.on("/api/lock", []() {
     lock.lock();
@@ -223,6 +224,17 @@ void setPillsLeft() {
   unsigned int pillsLeft = server.pathArg(0).toInt();
   state.setPillsLeft(pillsLeft);
   sendOk();
+}
+
+void setPillsAvailable() {
+  unsigned int currentlyAvailable = state.getPillsAvailable();
+  unsigned int newValue = server.pathArg(0).toInt();
+  if(newValue < currentlyAvailable) {
+    state.setPillsAvailable(newValue);
+    sendOk();
+  } else {
+    sendBadRequest();
+  }
 }
 
 void doNextDay() {

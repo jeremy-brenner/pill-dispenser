@@ -9,6 +9,7 @@ const spin = ref(false);
 const shake = computed(() => props.pillsAvailable >= 1 && !spin.value);
 
 const pillsLeftElement = ref(null)
+const pillsAvailableElement = ref(null)
 
 function click() {
   if(props.pillsAvailable >= 1) {
@@ -16,6 +17,15 @@ function click() {
     fetch('/api/doDispense');
     setTimeout(() => spin.value = false, 1000);
   }
+}
+
+function updateAvailable(e) {
+  e.target.blur();
+  e.stopPropagation();
+  e.preventDefault();
+  const val = pillsAvailableElement.value.innerText.trim();
+
+  fetch(`/api/setPillsAvailable/${Math.floor(val * 100)}`);
 }
 
 function updateLeft(e) {
@@ -38,7 +48,7 @@ function updateLeft(e) {
       <span></span>
       <span></span>
     </div>
-    <div class="available"> 
+    <div class="available" ref="pillsAvailableElement" contentEditable="true" inputmode=decimal @keydown.enter="updateAvailable"> 
       {{  props.pillsAvailable }}
     </div>
     <div class="left" ref="pillsLeftElement" contentEditable="true" inputmode=decimal @keydown.enter="updateLeft"> 
