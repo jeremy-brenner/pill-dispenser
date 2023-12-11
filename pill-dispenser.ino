@@ -202,7 +202,7 @@ void loop() {
   dnsServer.processNextRequest();
   server.handleClient();
   doWebSocket();
-  delay(250);
+  delay(100);
 }
 
 void doWebSocket() {
