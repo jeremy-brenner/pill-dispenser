@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import moment from 'moment'
 
 const debugEndpoints = ref([
@@ -25,32 +25,55 @@ const pillsLeft = ref(0);
 const minimumUnlockTime = ref();
 const currentUnlockDays = ref();
 const debug = ref();
+const lastMessageTime = ref(0);
+const elapsed = ref(0);
 const hostname = ref(location.hostname);
-let loadTime = Date.now()
+let ws;
 
 startWebSocket();
 
-setInterval(() =>{
-  ready.value = Date.now() - loadTime < 2000
-},1000);
+setInterval( () => {
+    const newElapsed = Date.now() - lastMessageTime.value;
+    if(lastMessageTime.value > 0 && elapsed.value < 5000 && newElapsed > 5000 && ws.readyState == 1) {
+      ws.close();
+    }
+    elapsed.value = newElapsed;
+  },
+  1000
+);
+
+const status = computed(() => {
+  if(elapsed.value < 2000) {
+    return 'ok';
+  }
+  if(elapsed.value < 5000) {
+    return 'warn';
+  }
+  return 'bad';
+});
+
 
 function startWebSocket() {
-  const wsPort = window.location.hostname == 'localhost' ? window.location.port : 81;
+  const wsPort = hostname.value == 'localhost' ? window.location.port : 81;
 
-  const ws = new WebSocket(`ws://${window.location.hostname}:${wsPort}/socket`);
+  ws = new WebSocket(`ws://${hostname.value}:${wsPort}/socket`);
   ws.onmessage = (e) => {
     if(e.data == 'Connected') {
       return;
     }
     setData(JSON.parse(e.data));
   }
-  ws.onclose = (e) => console.log('ws closed', e);
+  ws.onclose = (e) => {
+    console.log('ws closed', e);
+    startWebSocket();
+  }
   ws.onerror = (e) => console.log('ws error', e); 
 }
 
 
 function setData(data) {
-  loadTime = Date.now();
+  ready.value = true;
+  lastMessageTime.value = Date.now();
   isLocked.value = data.isLocked === "1";
   canUnlock.value = data.canUnlock === "1";
   unlockTime.value = data.unlockTime*1000;
@@ -104,7 +127,7 @@ function callFetch(path) {
       class="full"
     />
     <div class="item">
-      {{ hostname }}
+      {{ hostname }} <span class="status" :class="status"></span>
     </div>
     <div class="item">
       System Time: {{ dateFormat(currentTime) }}
@@ -183,6 +206,26 @@ function callFetch(path) {
     border-radius: 0.75rem;
     background-color: #545463;
     padding: 0.5rem;
+  }
+
+  .status {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 100%;
+    display: inline-block;
+    border: 1px solid #434355;
+  }
+
+  .ok {
+    background-color: rgb(13, 94, 13); 
+  }
+
+  .warn {
+    background-color: rgb(224, 157, 14);
+  }
+
+  .bad {
+    background-color: rgb(173, 0, 0);
   }
 
 </style>
