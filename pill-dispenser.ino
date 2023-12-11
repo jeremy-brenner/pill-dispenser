@@ -7,6 +7,7 @@
 #include <LittleFS.h>
 #include <uri/UriRegex.h>
 #include <Esp.h>
+#include <WebSocketsServer.h>
 
 #include "src/Lock/Lock.h"
 #include "src/Carousel/Carousel.h"
@@ -29,10 +30,9 @@ Lock lock(&state);
 const byte DNS_PORT = 53;
 DNSServer dnsServer;
 IPAddress localIP(192, 168, 2, 1);
-
-
+WebSocketsServer webSocket = WebSocketsServer(81);
+time_t lastSentWebSocket = 0;
 bool haveWifi;
-
 
 void setup() {
   Serial.begin(115200);
@@ -152,8 +152,11 @@ void setup() {
   server.onNotFound(sendNotFound);
   server.begin();
 
+  webSocket.begin();
+  webSocket.onEvent(webSocketEvent);
+
   Serial.println("End setup");
-  delay(1000);
+  delay(500);
 }
 
 void stop() {
@@ -198,7 +201,17 @@ void loop() {
   scheduler.update(timeSync.isTimeSet());
   dnsServer.processNextRequest();
   server.handleClient();
-  delay(100);
+  doWebSocket();
+  delay(250);
+}
+
+void doWebSocket() {
+  if(now() != lastSentWebSocket) { 
+    String status = systemStatus();
+    webSocket.broadcastTXT(status);
+    lastSentWebSocket = now();
+  }
+  webSocket.loop();
 }
 
 void debugMethod(Lambda action) {
@@ -297,6 +310,44 @@ void sendNotFound() {
 void sendOk() {
   server.send(200, "text/plain", "OK");
 }
+
+void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length) {
+    switch(type) {
+        case WStype_DISCONNECTED:
+            Serial.printf("[%u] Disconnected!\n", num);
+            break;
+        case WStype_CONNECTED:
+            {
+                IPAddress ip = webSocket.remoteIP(num);
+                Serial.printf("[%u] Connected from %d.%d.%d.%d url: %s\n", num, ip[0], ip[1], ip[2], ip[3], payload);
+
+				// send message to client
+				webSocket.sendTXT(num, "Connected");
+            }
+            break;
+        case WStype_TEXT:
+            Serial.printf("[%u] get Text: %s\n", num, payload);
+
+            // send message to client
+            // webSocket.sendTXT(num, "message here");
+
+            // send data to all connected clients
+            // webSocket.broadcastTXT("message here");
+            break;
+        case WStype_BIN:
+            Serial.printf("[%u] get binary length: %u\n", num, length);
+            
+            break;
+		case WStype_ERROR:			
+		case WStype_FRAGMENT_TEXT_START:
+		case WStype_FRAGMENT_BIN_START:
+		case WStype_FRAGMENT:
+		case WStype_FRAGMENT_FIN:
+			break;
+    }
+
+}
+
 
 String systemStatus() {
   StaticJsonDocument<500> doc;

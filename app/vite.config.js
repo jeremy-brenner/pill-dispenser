@@ -13,6 +13,11 @@ export default defineConfig({
   server: {
     proxy: {
       '^/api': 'http://pillboxtest',
+      '^/socket': {
+        target: 'http://pillboxtest:81',
+        ws: true,
+        changeOrigin: true
+      }
     }
   },
   resolve: {

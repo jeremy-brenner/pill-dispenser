@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import moment from 'moment'
 
 const debugEndpoints = ref([
@@ -28,27 +28,26 @@ const debug = ref();
 const hostname = ref(location.hostname);
 let loadTime = Date.now()
 
-
-function fetchLoop() {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), 2000);
-
-  fetch('/api/status', { signal: controller.signal })
-  .then(response => response.json())
-  .then(setData)
-  .catch(() => {})
-  .then(() => {
-    clearTimeout(id);
-    setTimeout(() => fetchLoop(), 1000);
-  })
-}
-
+startWebSocket();
 
 setInterval(() =>{
   ready.value = Date.now() - loadTime < 2000
 },1000);
 
-fetchLoop();
+function startWebSocket() {
+  const wsPort = window.location.hostname == 'localhost' ? window.location.port : 81;
+
+  const ws = new WebSocket(`ws://${window.location.hostname}:${wsPort}/socket`);
+  ws.onmessage = (e) => {
+    if(e.data == 'Connected') {
+      return;
+    }
+    setData(JSON.parse(e.data));
+  }
+  ws.onclose = (e) => console.log('ws closed', e);
+  ws.onerror = (e) => console.log('ws error', e); 
+}
+
 
 function setData(data) {
   loadTime = Date.now();
