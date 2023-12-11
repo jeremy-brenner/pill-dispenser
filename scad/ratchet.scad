@@ -7,7 +7,7 @@ ad=19;
 aad=6;
 aa=10;
 
-t=6;
+t=6.5;
 
 module springPeg() {
   cube([6,2,6]);
