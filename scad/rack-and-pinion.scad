@@ -5,8 +5,8 @@ Module = 0.8;
 teeth=12;
 
 
-rack_length = 13.8;
-rack_height=4;
+rack_length = 11.4;
+rack_height=3.5;
 bore=5.5;
 width=5;
 final_hub_thickness=0;
@@ -22,7 +22,7 @@ pinion();
 // rack();
 
 module rack() {
-  translate([0,rack_height,0]) zahnstange(modul=Module, laenge=rack_length, hoehe=rack_height, breite=width, eingriffswinkel=pressure_angle, schraegungswinkel=finalHelixAngle);
+  translate([1.3,rack_height,0]) zahnstange(modul=Module, laenge=rack_length, hoehe=rack_height, breite=width, eingriffswinkel=pressure_angle, schraegungswinkel=finalHelixAngle);
 }  
 
 
@@ -31,13 +31,14 @@ module rack() {
 module pinion() {
   stirnrad (modul=Module, zahnzahl=teeth, breite=width, bohrung=bore, nabendurchmesser=final_hub_diameter, nabendicke=final_hub_thickness, eingriffswinkel=pressure_angle, schraegungswinkel=finalHelixAngle, optimiert=optimized);
   difference() {
+    r=1.91;
     cylinder(r=3,h=4.5);
     cylinder(r=1.25,h=6);
     translate([0,0,3.5]) cylinder(r=2.75,h=1.6);
-    translate([0,0,-0.1]) cylinder(r=2.1,h=2.6);
+    translate([0,0,-0.1]) cylinder(r=r-0.1,h=2.6);
     a=24;
     for ( i = [0 : 360/a-1] ){
-      rotate([0,0,i*a]) translate([0,2,0]) rotate([0,0,45]) translate([-0.75/2,-0.75/2,-0.1]) cube([0.75,0.75,2.6]);
+      rotate([0,0,i*a]) translate([0,r,0]) rotate([0,0,45]) translate([-0.75/2,-0.75/2,-0.1]) cube([0.75,0.75,2.6]);
     }
   }  
 }
