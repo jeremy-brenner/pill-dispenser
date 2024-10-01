@@ -48,10 +48,10 @@ function updateLeft(e) {
       <span></span>
       <span></span>
     </div>
-    <div class="available" ref="pillsAvailableElement" contentEditable="true" inputmode=decimal @keydown.enter="updateAvailable"> 
+    <div class="available" ref="pillsAvailableElement" contentEditable="true" inputmode=decimal @keydown.enter="updateAvailable" enterkeyhint="done"> 
       {{  props.pillsAvailable }}
     </div>
-    <div class="left" ref="pillsLeftElement" contentEditable="true" inputmode=decimal @keydown.enter="updateLeft"> 
+    <div class="left" ref="pillsLeftElement" contentEditable="true" inputmode=decimal @keydown.enter="updateLeft" enterkeyhint="done"> 
       {{  props.pillsLeft }}
     </div>
   </div>
